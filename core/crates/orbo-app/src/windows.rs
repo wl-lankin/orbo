@@ -47,47 +47,15 @@ const WIN_OVERLAY_SCRIPT: &str = r#"(() => {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
 })();"#;
 
-/// Adapts the panels (settings, onboarding, dialog) to Windows without touching the shared pages:
-/// Windows key names, no notch portal, no macOS privacy hints.
+/// Windows-only panel tweaks; key names and wording come from ui/platform.js.
 #[cfg(target_os = "windows")]
 const WIN_PANEL_SCRIPT: &str = r#"(() => {
   document.documentElement.classList.add('os-win');
-  const TEXT = [
-    ['bei der Anmeldung am Mac', 'bei der Anmeldung an Windows'],
-    ['auf deinem Mac', 'auf deinem PC'],
-    ['im Finder', 'im Explorer'],
-    ['macOS fragt einmalig pro geschütztem Ordner, ob Orbo auf Dateien zugreifen darf.', 'Unter Windows ist keine Freigabe nötig.'],
-    ['⌥', 'Alt'], ['⌃', 'Strg'],
-  ];
-  const fixText = root => {
-    if (!root) return;
-    const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
-      let t = n.nodeValue;
-      const o = t;
-      for (const [a, b] of TEXT) if (t.includes(a)) t = t.split(a).join(b);
-      if (t !== o) n.nodeValue = t;
-    }
-  };
   const fix = () => {
     const st = document.createElement('style');
-    st.textContent = `.os-win .key[data-v="command"], .os-win .key[data-v="fn"], .os-win #privacyBtn, .os-win #grantNote { display: none !important; }
-      .os-win .key b { font-size: .8em; }
+    st.textContent = `.os-win #privacyBtn, .os-win #grantNote { display: none !important; }
       .os-win.solid-bg, .os-win.solid-bg body { background: #1b1d2b !important; }`;
     document.head.appendChild(st);
-    const notch = document.getElementById('notch');
-    const row = notch && notch.closest('.row');
-    if (row) row.style.display = 'none';
-    const label = { option: 'Alt', control: 'Strg', shift: 'Umschalt' };
-    document.querySelectorAll('.key[data-v]').forEach(k => {
-      const l = k.querySelector('span');
-      if (l && label[k.dataset.v]) l.textContent = label[k.dataset.v];
-    });
-    fixText(document.body);
-    new MutationObserver(ms => ms.forEach(m => {
-      if (m.type === 'characterData') fixText(m.target.parentNode);
-      else m.addedNodes.forEach(n => fixText(n.nodeType === 3 ? n.parentNode : n));
-    })).observe(document.body, { subtree: true, childList: true, characterData: true });
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fix); else fix();
 })();"#;

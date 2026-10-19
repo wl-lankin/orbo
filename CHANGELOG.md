@@ -1,5 +1,10 @@
 # Änderungen
 
+## 1.1.1
+
+- Windows: Einrichtungsassistent und Einstellungen zeigen nur noch Windows-Tasten (Alt, Strg, Umschalt) und keine Mac-Texte mehr.
+- Windows: In der Apps-Liste steht jetzt „Wolfgang Linz“ als Herausgeber.
+
 ## 1.1.0
 
 - „Lautheit“ heißt jetzt „Lautstärke angleichen“.

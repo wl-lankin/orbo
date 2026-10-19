@@ -286,3 +286,6 @@ span.segc button.on { background: var(--seg-on); color: var(--txt); font-weight:
 .hintrow[hidden] { display: none; }
 .hintrow code { flex: 1; min-width: 0; padding: 7px 10px; border-radius: 8px; background: var(--control); font: 11.5px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; user-select: text; word-break: break-all; }
 #integ > div + div { border-top: 1px solid var(--hair); }
+
+.os-win .mac-only { display: none !important; }
+.key.word b { font-size: 16px; font-weight: 650; }

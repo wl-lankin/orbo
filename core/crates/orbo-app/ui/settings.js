@@ -96,7 +96,7 @@
   /* ---------- Watched folders ---------- */
   S.watch = S.watch || [];
   let wTargets = null, wStatus = {}, pick = null;
-  const isMac = /Mac/i.test(navigator.platform);
+  const isMac = !(window.OrboPlatform && OrboPlatform.IS_WIN);
   const baseName = p => p.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || p;
   const loadTargets = async () => { if (!wTargets) { try { wTargets = await invoke('watch_targets'); } catch (_) { wTargets = []; } } return wTargets; };
   const targetOf = id => (wTargets || []).find(t => t.id === id);
@@ -373,6 +373,7 @@
     $('autoupdate').checked = S.auto_update !== false;
     $('autostart').checked = !!S.autostart; $('sound').checked = !!S.sound; $('reduce').checked = !!S.reduce_motion;
     mark($('keys'), S.trigger_key || 'option');
+    const hk = $('heroKey'); if (hk && window.OrboPlatform) { const g = OrboPlatform.glyph(S.trigger_key || 'option'); hk.textContent = g; hk.style.fontSize = g.length > 1 ? '18px' : ''; }
     $('shake').checked = !!S.shake; $('notch').checked = !!S.notch;
     mark($('mode'), S.output.mode); mark($('naming'), S.output.naming === 'plain' ? 'plain' : 'suffix');
     $('folderRow').hidden = S.output.mode !== 'folder';

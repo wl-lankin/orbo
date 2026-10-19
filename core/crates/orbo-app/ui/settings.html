@@ -81,7 +81,7 @@
               <circle cx="80" cy="46" r="9" fill="rgba(255,255,255,.4)"/></svg>
           </span>Glas</button>
       </div>
-      <label class="row"><span class="lbl">Bei Anmeldung starten<small>Orbo startet automatisch bei der Anmeldung am Mac</small></span><input class="tg" type="checkbox" id="autostart"></label>
+      <label class="row"><span class="lbl">Bei Anmeldung starten<small data-win="Orbo startet automatisch bei der Anmeldung an Windows">Orbo startet automatisch bei der Anmeldung am Mac</small></span><input class="tg" type="checkbox" id="autostart"></label>
       <label class="row"><span class="lbl">Klick-Ton<small>Leises Klicken bei der Auswahl im Ring</small></span><input class="tg" type="checkbox" id="sound"></label>
       <label class="row"><span class="lbl">Bewegung reduzieren<small>Weniger Animationen im Ring und in den Fenstern</small></span><input class="tg" type="checkbox" id="reduce"></label>
       <div class="row"><span class="lbl">Einführung<small>Einführung in Orbo erneut anzeigen</small></span><button class="btn" id="intro" type="button">Einführung erneut anzeigen</button></div>
@@ -99,7 +99,7 @@
         <g class="keyg">
           <rect class="keyglow" x="84" y="30" width="64" height="64" rx="16"/>
           <rect class="keycap" x="90" y="34" width="52" height="52" rx="12"/>
-          <text x="116" y="69" text-anchor="middle" class="keytxt">⌥</text>
+          <text x="116" y="69" text-anchor="middle" class="keytxt" id="heroKey">⌥</text>
         </g>
         <g class="shake">
           <path class="zig" d="M196 52l-8 5 8 5-8 5"/><path class="zig" d="M284 52l8 5-8 5 8 5"/>
@@ -128,7 +128,7 @@
     <h3>Weitere Auslöser</h3>
     <div class="card">
       <label class="row"><span class="lbl">Schütteln<small>Datei beim Ziehen schnell hin und her bewegen</small></span><input class="tg" type="checkbox" id="shake"></label>
-      <label class="row"><span class="lbl"><span>Notch-Portal</span><small>Datei zur Kamera-Notch ziehen</small></span><input class="tg" type="checkbox" id="notch"></label>
+      <label class="row mac-only"><span class="lbl"><span>Notch-Portal</span><small>Datei zur Kamera-Notch ziehen</small></span><input class="tg" type="checkbox" id="notch"></label>
     </div>
   </section>
 
@@ -359,6 +359,7 @@
   </section>
 </main>
 
+<script src="platform.js"></script>
 <script src="dev-mock-dialogs.js"></script>
 <script src="settings.js"></script>
 </body>

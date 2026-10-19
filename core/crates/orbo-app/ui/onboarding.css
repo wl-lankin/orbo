@@ -207,3 +207,6 @@ input.tg:checked::after { transform: translateX(16px); }
 .ctxmenu .sep { height: 1px; padding: 0; margin: 4px 6px; background: rgba(255, 255, 255, .08); }
 .ctxmenu .hl { background: rgba(61, 123, 255, .22); color: var(--txt); font-weight: 600; }
 .ring-dot { width: 14px; height: 14px; border-radius: 50%; background: conic-gradient(#b197fc 0 60deg, #ff8094 0 120deg, #5be08f 0 180deg, #74b0ff 0 240deg, #ffd84d 0 300deg, #ffb878 0); -webkit-mask: radial-gradient(circle, transparent 3.5px, #000 4px); mask: radial-gradient(circle, transparent 3.5px, #000 4px); }
+
+.os-win .mac-only { display: none !important; }
+.key.word b { font-size: 16px; font-weight: 650; }

@@ -6,7 +6,8 @@
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const SVGNS = 'http://www.w3.org/2000/svg';
   const KIND_COLORS = ['image', 'video', 'audio', 'data', 'archive', 'document'];
-  const KEYS = { option: '⌥', control: '⌃', shift: '⇧', command: '⌘', fn: 'fn' };
+  const P = window.OrboPlatform;
+  const keyGlyph = v => P.glyph(v);
 
   let S = { style: 'classic', trigger_key: 'option', shake: true, autostart: false };
   let step = 0;
@@ -95,7 +96,7 @@
     hint.hidden = false; hint.classList.remove('bad');
     try {
       await invoke('onboarding_sample');
-      hint.innerHTML = `Die Beispieldatei liegt jetzt im Finder. Ziehe sie, halte <span class="kbd">${KEYS[S.trigger_key] || '⌥'}</span> gedrückt und lege sie auf einem Feld ab.`;
+      hint.innerHTML = `Die Beispieldatei liegt jetzt im ${P.fileManager}. Ziehe sie, halte <span class="kbd">${keyGlyph(S.trigger_key)}</span> gedrückt und lege sie auf einem Feld ab.`;
     } catch (_) {
       hint.classList.add('bad');
       hint.textContent = 'Die Beispieldatei konnte nicht angelegt werden.';
@@ -103,7 +104,7 @@
   });
 
   // ---------- step 3: folder access (macOS) or Explorer entry (Windows) ----------
-  const IS_WIN = /Windows/i.test(navigator.userAgent);
+  const IS_WIN = P.IS_WIN;
   document.documentElement.classList.toggle('is-win', IS_WIN);
   if (IS_WIN) {
     $('step3Label').textContent = 'Rechtsklick';
@@ -163,9 +164,9 @@
     mark($('themes'), S.style);
     $('autostart').checked = !!S.autostart;
     $('shake').checked = !!S.shake;
-    const glyph = KEYS[S.trigger_key] || '⌥';
+    const glyph = keyGlyph(S.trigger_key);
     $('keyInline').textContent = glyph; $('sceneKey').textContent = glyph;
-    $('sceneKey').setAttribute('font-size', glyph.length > 1 ? 18 : 22);
+    $('sceneKey').style.fontSize = glyph.length > 1 ? '15px' : '';
   }
   $$('#keys [data-v]').forEach(b => b.addEventListener('click', () => { S.trigger_key = b.dataset.v; renderChoices(); }));
   $$('#themes [data-v]').forEach(b => b.addEventListener('click', () => { S.style = b.dataset.v; renderChoices(); }));
