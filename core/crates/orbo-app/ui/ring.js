@@ -8,6 +8,7 @@
   const R = { lens: 62, inner: 70, out: 180, pin: 190, pout: 244 };
   const CENTER = 260;
   const IS_MAC = /Mac/.test(navigator.platform || navigator.userAgent);
+  document.documentElement.classList.toggle('os-win', !IS_MAC);
   const KINDS = new Set(['image', 'video', 'audio', 'document', 'data', 'archive', 'folder', 'model', 'cad', 'typeface']);
   const MB = 1048576, KB = 1024;
   const $ = id => document.getElementById(id);

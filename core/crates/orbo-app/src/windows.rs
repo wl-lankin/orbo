@@ -31,24 +31,10 @@ fn overlay(app: &AppHandle, label: &str, page: &str, w: f64, h: f64) -> tauri::R
     #[cfg(target_os = "windows")]
     {
         // WebView2 paints white until the page is loaded; a transparent default avoids the flash.
-        b = b.focusable(false).background_color(tauri::window::Color(0, 0, 0, 0)).initialization_script(WIN_OVERLAY_SCRIPT);
+        b = b.focusable(false).background_color(tauri::window::Color(0, 0, 0, 0));
     }
     b.build()
 }
-
-/// Windows has no native round backdrop behind the ring (macOS: vibrancy or Liquid Glass), so the page draws one. Without a blur it has to be nearly opaque to keep labels readable over busy folders.
-#[cfg(target_os = "windows")]
-const WIN_OVERLAY_SCRIPT: &str = r#"(() => {
-  document.documentElement.classList.add('os-win');
-  const css = `
-    .os-win #stage::before { content: ""; position: absolute; left: 80px; top: 80px; width: 360px; height: 360px;
-      border-radius: 50%; background: rgba(20, 22, 36, .95); box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 12px 40px rgba(0, 0, 0, .35); }
-    .os-win body.style-glass #stage::before { background: rgba(58, 62, 84, .93); box-shadow: 0 0 0 1px rgba(255, 255, 255, .22), 0 12px 40px rgba(0, 0, 0, .25); }
-    .os-win body.style-classic { --pre-fill: rgba(18, 20, 36, .95); }
-    .os-win body.style-glass { --pre-fill: rgba(58, 62, 84, .93); }`;
-  const add = () => { const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st); };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
-})();"#;
 
 /// Windows-only panel tweaks; key names and wording come from ui/platform.js.
 #[cfg(target_os = "windows")]

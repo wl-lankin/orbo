@@ -1,5 +1,9 @@
 # Änderungen
 
+## 1.1.5
+
+- Windows: Der Ring hat jetzt wirklich eine deckende Scheibe. Die Änderung aus 1.1.4 kam beim Ring nicht an.
+
 ## 1.1.4
 
 - Windows: Der Ring ist fast deckend, damit die Felder auch vor einem vollen Ordner oder einem bunten Hintergrund lesbar bleiben.

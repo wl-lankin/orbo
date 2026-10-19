@@ -17,6 +17,12 @@ html, body { width: 520px; height: 520px; overflow: hidden; background: transpar
   --tint-op: .46; --pre-fill: rgba(255, 255, 255, .18);
   --spec-op: 1; --sheen-op: .6;
 }
+.os-win .style-classic { --sec-fill: rgba(22, 24, 40, .96); --pre-fill: rgba(18, 20, 36, .96); }
+.os-win .style-glass { --sec-fill: rgba(62, 66, 90, .95); --pre-fill: rgba(62, 66, 90, .95); --lens-fill: rgba(44, 48, 70, .96); }
+/* Windows has no blur behind the window, so the ring draws its own opaque disc. */
+.os-win #stage::before { content: ""; position: absolute; left: 80px; top: 80px; width: 360px; height: 360px;
+  border-radius: 50%; background: rgb(20, 22, 36); box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 12px 40px rgba(0, 0, 0, .35); }
+.os-win .style-glass #stage::before { background: rgb(52, 56, 78); box-shadow: 0 0 0 1px rgba(255, 255, 255, .22), 0 12px 40px rgba(0, 0, 0, .25); }
 .style-classic .sec, .style-classic .pre, .style-classic #lens { --kz: var(--k); }
 .style-glass .sec, .style-glass .pre, .style-glass #lens { --kz: color-mix(in srgb, var(--k) 38%, #fff); }
 
