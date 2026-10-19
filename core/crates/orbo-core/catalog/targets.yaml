@@ -1004,12 +1004,21 @@ targets:
     group: Dokument
     params: { op: convert, to: rtf }
 
+  - id: md_html
+    title: HTML
+    sub: als Webseite
+    output: html
+    engine: document
+    accepts: [md]
+    group: Dokument
+    params: { op: convert, to: html }
+
   - id: html_doc
     title: HTML
     sub: als Webseite
     output: html
     engine: document
-    accepts: [txt, md, rtf, doc, docx, odt]
+    accepts: [txt, rtf, doc, docx, odt]
     requires: [macos]
     group: Dokument
     params: { op: convert, to: html }

@@ -48,7 +48,7 @@ ring:
     toml: [json, yaml]
     pdf: [pdf_jpg, pdf_txt, pdf_compress, pdf_split, pdf_rotate, pdf_strip]
     txt: [doc_pdf, docx, md, html_doc, rtf]
-    md: [html_doc, doc_pdf, docx, txt]
+    md: [md_html, doc_pdf, docx, txt]
     docx: [office_pdf, txt, md, odt, rtf]
     doc: [docx, office_pdf, txt, odt]
     odt: [docx, office_pdf, txt, rtf]

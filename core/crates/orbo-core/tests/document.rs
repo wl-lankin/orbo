@@ -154,7 +154,7 @@ fn markdown_to_html_and_text() {
     let d = tempfile::tempdir().unwrap();
     let md = d.path().join("notiz.md");
     fs::write(&md, "# Größe\n\nText mit *Betonung* und [Link](https://example.org).\n\n1. a\n2. b\n").unwrap();
-    let html = fs::read_to_string(run(&md, "html_doc").unwrap()).unwrap();
+    let html = fs::read_to_string(run(&md, "md_html").unwrap()).unwrap();
     assert!(html.contains("<h1>Größe</h1>") && html.contains("<em>Betonung</em>") && html.contains("href=\"https://example.org\""));
     assert!(html.contains("charset=\"utf-8\""));
 }
