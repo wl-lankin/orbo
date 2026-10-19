@@ -176,6 +176,25 @@
 
   <!-- Überwachte Ordner -->
   <section class="pane" data-pane="wat">
+    <figure class="hero" data-slot="ordner">
+      <svg viewBox="0 0 474 124" role="img" aria-label="Neue Dateien fallen in einen Ordner und kommen umgewandelt wieder heraus">
+        <g class="wdrop wd1"><use href="#file" class="c-data-t" x="186" y="-4" width="26" height="32"/></g>
+        <g class="wdrop wd2"><use href="#file" class="c-data-t" x="214" y="-4" width="26" height="32"/></g>
+        <circle class="wpulse" cx="226" cy="74" r="38"/>
+        <g class="wfolder">
+          <path d="M180 52a7 7 0 017-7h22l8 9h43a7 7 0 017 7v36a7 7 0 01-7 7h-73a7 7 0 01-7-7z" fill="#5a83ff"/>
+          <path d="M180 66h87v31a7 7 0 01-7 7h-73a7 7 0 01-7-7z" fill="#3d6bff"/>
+          <circle cx="223" cy="84" r="9" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.4"/><circle cx="223" cy="84" r="3" fill="#fff"/>
+        </g>
+        <g class="wout">
+          <use href="#file" class="c-image-t" x="300" y="46" width="44" height="55"/>
+          <rect x="306" y="83" width="32" height="13" rx="4" fill="rgba(0,0,0,.28)"/><text x="322" y="93" text-anchor="middle" class="ext">WEBP</text>
+          <path d="M342 40l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff" class="spark"/>
+        </g>
+        <path class="warrow" d="M276 76h16m-6-6l6 6-6 6"/>
+      </svg>
+    </figure>
+
     <h3>Überwachte Ordner</h3>
     <div class="card" id="wEmpty">
       <div class="row wempty">
@@ -201,6 +220,24 @@
 
   <!-- Abläufe -->
   <section class="pane" data-pane="chn">
+    <figure class="hero" data-slot="ablaeufe">
+      <svg viewBox="0 0 474 124" role="img" aria-label="Eine Datei durchläuft mehrere Schritte nacheinander">
+        <path class="cline" d="M88 62H396"/>
+        <path class="cline cflow" d="M88 62H396"/>
+        <use href="#file" class="c-data-t" x="44" y="36" width="42" height="52"/>
+        <rect x="50" y="70" width="30" height="13" rx="4" fill="rgba(0,0,0,.28)"/><text x="65" y="80" text-anchor="middle" class="ext">PNG</text>
+        <g class="cstep cs1"><rect x="112" y="48" width="74" height="28" rx="14"/><text x="149" y="66" text-anchor="middle">1920 px</text></g>
+        <g class="cstep cs2"><rect x="200" y="48" width="64" height="28" rx="14"/><text x="232" y="66" text-anchor="middle">WEBP</text></g>
+        <g class="cstep cs3"><rect x="278" y="48" width="96" height="28" rx="14"/><text x="326" y="66" text-anchor="middle">ohne GPS</text></g>
+        <circle class="cdot" cx="88" cy="62" r="5"/>
+        <g class="cres">
+          <use href="#file" class="c-image-t" x="392" y="36" width="42" height="52"/>
+          <rect x="397" y="70" width="32" height="13" rx="4" fill="rgba(0,0,0,.28)"/><text x="413" y="80" text-anchor="middle" class="ext">WEBP</text>
+          <circle cx="430" cy="40" r="9" fill="var(--ok)"/><path d="M425.5 40l3.2 3.2 5-5.6" fill="none" stroke="#0d2a18" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    </figure>
+
     <h3>Abläufe</h3>
     <div class="card" id="cEmpty">
       <div class="row wempty">

@@ -85,6 +85,37 @@ h3 { margin: 20px 4px 7px; font-size: 12px; font-weight: 600; color: var(--mut);
 .spark { transform-box: fill-box; transform-origin: center; animation: twinkle 3s ease-in-out infinite; }
 @keyframes twinkle { 0%, 100% { opacity: .2; transform: scale(.6) rotate(0); } 50% { opacity: 1; transform: scale(1.1) rotate(45deg); } }
 
+/* Watch-folder illustration */
+.wdrop { transform-box: fill-box; transform-origin: center; opacity: 0; }
+.wd1 { animation: wdrop 6s ease-in infinite; }
+.wd2 { animation: wdrop 6s 1.1s ease-in infinite; }
+@keyframes wdrop { 0% { opacity: 0; transform: translateY(-10px); } 10% { opacity: 1; } 32% { opacity: 1; transform: translateY(54px) scale(.8); } 40%, 100% { opacity: 0; transform: translateY(60px) scale(.5); } }
+.wpulse { fill: none; stroke: rgba(120, 160, 255, .55); stroke-width: 1.5; transform-box: fill-box; transform-origin: center; animation: wpulse 3s ease-out infinite; }
+@keyframes wpulse { from { opacity: .8; transform: scale(.7); } to { opacity: 0; transform: scale(1.35); } }
+.wout { transform-box: fill-box; transform-origin: center; opacity: 0; animation: wout 6s ease-in-out infinite; }
+@keyframes wout { 0%, 38% { opacity: 0; transform: translateX(-28px) scale(.8); } 52%, 88% { opacity: 1; transform: none; } 98%, 100% { opacity: 0; transform: none; } }
+.warrow { fill: none; stroke: rgba(255, 255, 255, .55); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.style-glass .wfolder path:first-child { fill: rgba(255, 255, 255, .55); } .style-glass .wfolder path:nth-child(2) { fill: rgba(255, 255, 255, .8); }
+
+/* Chain illustration */
+.cline { fill: none; stroke: rgba(255, 255, 255, .18); stroke-width: 2; }
+.cflow { stroke: var(--accent); stroke-dasharray: 308; stroke-dashoffset: 308; animation: cflow 6s linear infinite; }
+.style-glass .cflow { stroke: #fff; }
+@keyframes cflow { 0% { stroke-dashoffset: 308; } 70%, 100% { stroke-dashoffset: 0; } }
+.cdot { fill: #fff; animation: cdot 6s linear infinite; }
+@keyframes cdot { 0% { transform: translateX(0); opacity: 1; } 70% { transform: translateX(308px); opacity: 1; } 76%, 100% { transform: translateX(308px); opacity: 0; } }
+.cstep rect { fill: #24273d; stroke: rgba(255, 255, 255, .22); transition: none; }
+.cstep text { font: 650 11px var(--font); fill: var(--mut); }
+.cs1 rect, .cs1 text { animation: cs1 6s linear infinite; }
+.cs2 rect, .cs2 text { animation: cs2 6s linear infinite; }
+.cs3 rect, .cs3 text { animation: cs3 6s linear infinite; }
+@keyframes cs1 { 0%, 9% { fill: #24273d; } 12%, 100% { fill: #2f55c8; } }
+@keyframes cs2 { 0%, 29% { fill: #24273d; } 32%, 100% { fill: #2f55c8; } }
+@keyframes cs3 { 0%, 50% { fill: #24273d; } 53%, 100% { fill: #2f55c8; } }
+.cstep text { animation: none !important; fill: #fff; }
+.cres { transform-box: fill-box; transform-origin: center; opacity: 0; animation: cres 6s ease-out infinite; }
+@keyframes cres { 0%, 68% { opacity: 0; transform: scale(.7); } 76%, 94% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
 /* AI illustration */
 .bound { fill: rgba(255, 255, 255, .04); stroke: rgba(255, 255, 255, .35); stroke-width: 1.5; stroke-dasharray: 5 6; }
 .screen { fill: #1d2038; stroke: rgba(255, 255, 255, .35); stroke-width: 1.5; }
