@@ -25,9 +25,10 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VIRTUAL_KEY,
 use windows::Win32::UI::Shell::{DragQueryFileW, HDROP};
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, GetCursorPos, GetSystemMetrics, GetWindowLongPtrW, RegisterClassW, SetLayeredWindowAttributes,
-    SetWindowLongPtrW, SetWindowPos, ShowWindow, GWL_EXSTYLE, HWND_TOPMOST, LWA_ALPHA, MA_NOACTIVATE, SM_CXDRAG, SM_SWAPBUTTON,
-    SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW, SW_HIDE, SW_SHOWNOACTIVATE, WM_MOUSEACTIVATE, WNDCLASSW, WS_EX_APPWINDOW,
-    WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_POPUP,
+    SetWindowLongPtrW, SetWindowPos, ShowWindow, GWL_EXSTYLE, GWL_STYLE, HWND_TOPMOST, LWA_ALPHA, MA_NOACTIVATE, SM_CXDRAG, SM_SWAPBUTTON,
+    SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, SWP_SHOWWINDOW, SW_HIDE, SW_SHOWNOACTIVATE, WM_MOUSEACTIVATE,
+    WNDCLASSW, WS_CAPTION, WS_EX_APPWINDOW, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_MAXIMIZEBOX,
+    WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
 };
 
 use super::{DragSignal, Point, Trigger, CANCEL_DISTANCE, RING_CENTER};
@@ -102,9 +103,14 @@ pub fn place_bottom_center(h: isize, width: f64, height: f64) {
 /// Topmost tool window that never takes focus and has no taskbar or Alt+Tab entry.
 pub fn make_overlay(h: isize) {
     unsafe {
+        // A tool window that keeps any caption bit gets a small title bar with a close button.
+        let st = GetWindowLongPtrW(hwnd(h), GWL_STYLE);
+        let frame = (WS_CAPTION.0 | WS_THICKFRAME.0 | WS_SYSMENU.0 | WS_MINIMIZEBOX.0 | WS_MAXIMIZEBOX.0) as isize;
+        SetWindowLongPtrW(hwnd(h), GWL_STYLE, (st & !frame) | WS_POPUP.0 as isize);
         let ex = GetWindowLongPtrW(hwnd(h), GWL_EXSTYLE);
         let ex = (ex | (WS_EX_NOACTIVATE.0 | WS_EX_TOOLWINDOW.0 | WS_EX_TOPMOST.0) as isize) & !(WS_EX_APPWINDOW.0 as isize);
         SetWindowLongPtrW(hwnd(h), GWL_EXSTYLE, ex);
+        let _ = SetWindowPos(hwnd(h), None, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     }
 }
 

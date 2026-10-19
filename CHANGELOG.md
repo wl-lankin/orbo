@@ -1,5 +1,9 @@
 # Änderungen
 
+## 1.1.2
+
+- Windows: Der Ring erscheint ohne Fensterrahmen und Titelleiste und blitzt beim Öffnen nicht mehr weiß auf.
+
 ## 1.1.1
 
 - Windows: Einrichtungsassistent und Einstellungen zeigen nur noch Windows-Tasten (Alt, Strg, Umschalt) und keine Mac-Texte mehr.

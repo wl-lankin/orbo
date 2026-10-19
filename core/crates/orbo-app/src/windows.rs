@@ -30,7 +30,8 @@ fn overlay(app: &AppHandle, label: &str, page: &str, w: f64, h: f64) -> tauri::R
         .accept_first_mouse(true);
     #[cfg(target_os = "windows")]
     {
-        b = b.focusable(false).initialization_script(WIN_OVERLAY_SCRIPT);
+        // WebView2 paints white until the page is loaded; a transparent default avoids the flash.
+        b = b.focusable(false).background_color(tauri::window::Color(0, 0, 0, 0)).initialization_script(WIN_OVERLAY_SCRIPT);
     }
     b.build()
 }
