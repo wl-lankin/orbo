@@ -2,6 +2,8 @@
 
 ## 1.1.0
 
+- Markdown nach HTML funktioniert jetzt auch unter Windows.
+- Einstellungen: Illustrationen für „Ordner“ und „Abläufe“.
 - Mehrere Dateien zu einer: Ziehst du mehrere PDFs, Bilder oder Audiodateien auf Orbo, bietet der Ring „Zusammenführen“ (PDFs, auch mit Bildern), „Als ein PDF“ (ein Bild pro Seite, Originalgröße oder A4) und „Aneinanderhängen“ (Audio) an. Die Reihenfolge ergibt sich aus den Dateinamen („Seite 2“ vor „Seite 10“). Auch in `orbo convert` und im MCP-Server verfügbar.
 - Das Kommandozeilen-Tool `orbo` gehört jetzt zur App und lässt sich in den Einstellungen einrichten.
 - `orbo mcp`: MCP-Server für Claude Code, Claude Desktop und Codex (Dateien analysieren und umwandeln). Einrichtung per Klick in den Einstellungen.
