@@ -1,5 +1,9 @@
 # Änderungen
 
+## 1.1.4
+
+- Windows: Der Ring ist fast deckend, damit die Felder auch vor einem vollen Ordner oder einem bunten Hintergrund lesbar bleiben.
+
 ## 1.1.3
 
 - Windows: Das Ablegen auf einem Feld im Ring startet jetzt die Umwandlung. Vorher kam das Loslassen beim Ring nicht an.
