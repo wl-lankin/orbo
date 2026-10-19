@@ -7,6 +7,16 @@
       "icons/icon.ico",
       "icons/icon.png"
     ],
-    "externalBin": []
+    "externalBin": [],
+    "windows": {
+      "nsis": {
+        "installMode": "both",
+        "languages": [
+          "German",
+          "English"
+        ],
+        "displayLanguageSelector": false
+      }
+    }
   }
 }

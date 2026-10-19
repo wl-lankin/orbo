@@ -4,7 +4,7 @@ members = ["crates/orbo-core", "crates/orbo-cli", "crates/orbo-app", "crates/orb
 
 [workspace.package]
 edition = "2021"
-version = "1.0.0"
+version = "1.0.1"
 license = "MIT"
 
 [profile.release]
