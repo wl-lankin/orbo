@@ -702,8 +702,8 @@ targets:
 
   # ───────────── Audio: Werkzeuge ─────────────
   - id: loudnorm
-    title: Lautheit
-    sub: normalisieren (EBU R128)
+    title: Lautstärke
+    sub: angleichen (EBU R128)
     output: mp3
     engine: media
     accepts: [audio]

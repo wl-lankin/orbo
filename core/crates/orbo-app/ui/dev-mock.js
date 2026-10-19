@@ -51,7 +51,7 @@
         T('mp3', 'MP3', 'universell abspielbar', 'audio', { controls: ['quality'], presets: ['128k', '192k', '320k'], size_estimate: 58 * MB }),
         T('m4a', 'M4A', 'AAC, kompakt', 'audio', { controls: ['quality'], size_estimate: 40 * MB }),
         T('transcript', 'Transkript', 'Text, lokale KI', 'document', { intent: true, size_estimate: 38000 }),
-        T('loud', 'Lautheit', 'normalisieren (EBU R128)', 'audio', { intent: true, dialog: true }),
+        T('loud', 'Lautstärke', 'angleichen (EBU R128)', 'audio', { intent: true, dialog: true }),
         T('opus', 'OPUS', 'optimal für Sprache', 'audio', { size_estimate: 12 * MB }),
         T('flac', 'FLAC', 'verlustfrei, kompakt', 'audio', { size_estimate: 264 * MB }),
       ],

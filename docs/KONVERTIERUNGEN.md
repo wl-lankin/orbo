@@ -80,7 +80,7 @@ Die Spalte „Ring-Vorschlag" zeigt, was der Ring typischerweise anbietet. Der v
 | Hochformat für Reels/TikTok (9:16, Motiv mittig) | V1 |
 | Kürzen (Mini-Zeitleiste nach Drop) ⚡ | V1 |
 | Geschwindigkeit 0,5× / 2× / Zeitraffer | V2 |
-| Lautheit angleichen | V1 |
+| Lautstärke angleichen | V1 |
 | Bildschirmaufnahme optimieren (niedrige fps, scharfer Text) | V1 |
 
 ---
@@ -101,7 +101,7 @@ Die Spalte „Ring-Vorschlag" zeigt, was der Ring typischerweise anbietet. Der v
 | AMR / WMA | MP3, M4A | FFmpeg | V1 | Alte Sprachnachrichten |
 | Sprache | Transkript TXT / SRT / DOCX | whisper.cpp | V2 (Modul Sprache) | Interview, Sprachmemo |
 
-**Aktionen:** Lautheit angleichen (EBU R128) MVP · Stille am Anfang/Ende entfernen V1 · Mono/Stereo V1 · Samplerate ändern V1 · Kürzen V1 · Stimme isolieren V2 · Tags/Cover behalten (immer).
+**Aktionen:** Lautstärke angleichen (EBU R128) MVP · Stille am Anfang/Ende entfernen V1 · Mono/Stereo V1 · Samplerate ändern V1 · Kürzen V1 · Stimme isolieren V2 · Tags/Cover behalten (immer).
 
 ---
 

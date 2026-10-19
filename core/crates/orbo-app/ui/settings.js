@@ -213,7 +213,7 @@
   const cleanSteps = steps => steps.map(s => ({ target: s.target, preset: s.preset || null }));
   const TEMPLATES = [
     { name: 'Bild fürs Web', note: 'Web-Format, dann Metadaten entfernen', steps: [{ target: 'web_image' }, { target: 'strip_meta' }] },
-    { name: 'Podcast fertig', note: 'Lautheit normalisieren, dann MP3 192k', steps: [{ target: 'loudnorm' }, { target: 'mp3', preset: '192k' }] },
+    { name: 'Podcast fertig', note: 'Lautstärke angleichen, dann MP3 192k', steps: [{ target: 'loudnorm' }, { target: 'mp3', preset: '192k' }] },
   ];
 
   function pills(steps) {

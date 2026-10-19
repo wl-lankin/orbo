@@ -2,6 +2,7 @@
 
 ## 1.1.0
 
+- „Lautheit“ heißt jetzt „Lautstärke angleichen“.
 - Markdown nach HTML funktioniert jetzt auch unter Windows.
 - Einstellungen: Illustrationen für „Ordner“ und „Abläufe“.
 - Mehrere Dateien zu einer: Ziehst du mehrere PDFs, Bilder oder Audiodateien auf Orbo, bietet der Ring „Zusammenführen“ (PDFs, auch mit Bildern), „Als ein PDF“ (ein Bild pro Seite, Originalgröße oder A4) und „Aneinanderhängen“ (Audio) an. Die Reihenfolge ergibt sich aus den Dateinamen („Seite 2“ vor „Seite 10“). Auch in `orbo convert` und im MCP-Server verfügbar.
