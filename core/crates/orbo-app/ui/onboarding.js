@@ -102,7 +102,26 @@
     }
   });
 
-  // ---------- step 3: folder access ----------
+  // ---------- step 3: folder access (macOS) or Explorer entry (Windows) ----------
+  const IS_WIN = /Windows/i.test(navigator.userAgent);
+  document.documentElement.classList.toggle('is-win', IS_WIN);
+  if (IS_WIN) {
+    $('step3Label').textContent = 'Rechtsklick';
+    const btn = $('winCtxBtn'), note = $('winCtxNote');
+    const render = st => {
+      if (st && st.installed) {
+        btn.textContent = 'Eingerichtet';
+        btn.disabled = true;
+        note.textContent = 'Fertig. Rechtsklick auf eine Datei im Explorer, dann „Mit Orbo umwandeln“. Unter Windows 11 steht der Eintrag unter „Weitere Optionen anzeigen“.';
+      }
+    };
+    invoke('context_menu_status').then(render).catch(() => {});
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try { render(await invoke('context_menu_install')); }
+      catch (e) { btn.disabled = false; note.textContent = 'Das hat nicht geklappt: ' + e; }
+    });
+  }
   const NAMES = { desktop: 'Schreibtisch', documents: 'Dokumente', downloads: 'Downloads' };
   let granted = {};
   function renderFolders(res, animate) {

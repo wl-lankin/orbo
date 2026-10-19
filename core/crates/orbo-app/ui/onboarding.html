@@ -77,8 +77,25 @@
     </div>
   </section>
 
-  <!-- 3 Ordner freigeben -->
+  <!-- 3 Ordner freigeben (macOS) bzw. Rechtsklick einrichten (Windows) -->
   <section class="step" data-step="2" aria-labelledby="h2">
+    <div class="win-only">
+      <h1 class="left">Rechtsklick-Menü</h1>
+      <p class="lead left">Auch ohne Ziehen: Datei im Explorer rechts anklicken, „Mit Orbo umwandeln“ wählen, und der Ring öffnet sich an der Maus. Ein Klick auf das Ziel genügt.</p>
+      <div class="card ctxdemo" aria-hidden="true">
+        <div class="ctxfile"><svg class="fi c-image"><use href="#file"/></svg><span>urlaub.jpg</span></div>
+        <div class="ctxmenu">
+          <div>Öffnen</div><div>Öffnen mit</div><div class="sep"></div>
+          <div class="hl"><span class="ring-dot"></span>Mit Orbo umwandeln</div>
+          <div>Kopieren</div><div>Umbenennen</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="button" id="winCtxBtn">Explorer-Rechtsklick einrichten</button>
+      </div>
+      <p class="fine" id="winCtxNote">Unter Windows 11 steht der Eintrag unter „Weitere Optionen anzeigen“. Eine Ordnerfreigabe wie auf dem Mac ist unter Windows nicht nötig.</p>
+    </div>
+    <div class="mac-only">
     <h1 id="h2" class="left">Ordner freigeben</h1>
     <p class="lead left">macOS fragt einmalig pro geschütztem Ordner, ob Orbo auf Dateien zugreifen darf. Orbo lädt keine Daten hoch und sendet nichts ins Netzwerk.</p>
     <div class="card folders" id="folders">
@@ -92,6 +109,7 @@
       <button class="link" type="button" id="privacyBtn">Systemeinstellungen öffnen</button>
     </div>
     <p class="fine" id="grantNote">Die Freigabe kannst du jederzeit nachholen. Ohne Freigabe fragt macOS erst beim ersten Zugriff.</p>
+    </div>
   </section>
 
   <!-- 4 Einrichtung abschließen -->
@@ -137,7 +155,7 @@
   <nav class="prog" id="prog" aria-label="Fortschritt">
     <button type="button" data-go="0"><i></i><span>Willkommen</span></button>
     <button type="button" data-go="1"><i></i><span>Ablauf</span></button>
-    <button type="button" data-go="2"><i></i><span>Ordner</span></button>
+    <button type="button" data-go="2"><i></i><span id="step3Label">Ordner</span></button>
     <button type="button" data-go="3"><i></i><span>Abschluss</span></button>
   </nav>
   <div class="nav">
