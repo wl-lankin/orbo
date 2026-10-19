@@ -77,6 +77,15 @@ jobs:
           uploadUpdaterJson: true
           args: --target aarch64-apple-darwin --bundles app,dmg --config tauri.updater.conf.json
 
+      # Stable names so the website can link to releases/latest/download/... across versions.
+      - name: Stable download name (macOS)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dmg=$(ls core/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          cp "$dmg" Orbo-macOS.dmg
+          gh release upload "$TAG" Orbo-macOS.dmg --clobber
+
   windows:
     needs: macos
     runs-on: windows-latest
@@ -144,3 +153,12 @@ jobs:
           uploadUpdaterJson: true
           updaterJsonPreferNsis: true
           args: --target x86_64-pc-windows-msvc --config tauri.updater.conf.json --config tauri.windows.release.conf.json
+
+      - name: Stable download name (Windows)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          exe=$(ls core/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe | head -1)
+          cp "$exe" Orbo-Windows-Setup.exe
+          gh release upload "$TAG" Orbo-Windows-Setup.exe --clobber
