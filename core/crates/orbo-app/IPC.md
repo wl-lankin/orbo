@@ -95,13 +95,13 @@ Beim Drop entscheidet die Seite anhand des getroffenen Felds:
 
 Event `job` mit `payload`:
 ```json
-{ "event": "started",  "id": 3, "input": "/…/Video.mov", "target": "mp4", "title": "MP4" }
+{ "event": "started",  "id": 3, "input": "/…/Video.mov", "target": "mp4", "title": "MP4", "count": 1 }
 { "event": "progress", "id": 3, "fraction": 0.42 }
 { "event": "finished", "id": 3, "output": "/…/Video.mp4", "bytes": 1234567, "millis": 812, "input_bytes": 9876543 }
 { "event": "failed",   "id": 3, "error": "…" }
 { "event": "cancelled","id": 3 }
 ```
-Rust blendet das Toast-Fenster bei `started` ein. Die Seite ruft `toast_hide`, wenn nichts mehr anzuzeigen ist.
+`count` ist 1, bei einer Zusammenführung die Zahl der Dateien (`input` ist dann die erste Datei, `input_bytes` die Summe). Rust blendet das Toast-Fenster bei `started` ein. Die Seite ruft `toast_hide`, wenn nichts mehr anzuzeigen ist.
 
 ## Gestaltung (für alle Seiten)
 
@@ -221,6 +221,16 @@ Ein Klick weiter als 260 px (`R.pout + 16`) von der Mitte, Esc oder Fensterfokus
 | `context_menu_install` | – | neuer Status, oder Fehlertext. macOS: schreibt `~/Library/Services/Mit Orbo umwandeln.workflow` (Vorlage in `resources/macos/`) und ruft `pbs -update` auf. Windows: schreibt `HKCU\Software\Classes\*\shell\Orbo` und `...\Directory\shell\Orbo` |
 | `context_menu_remove` | – | neuer Status; entfernt Workflow bzw. Registrierungsschlüssel |
 
+## Kommandozeile und KI-Programme
+
+Wird nur durch Klick in den Einstellungen (Allgemein) ausgelöst, nie beim Start. `id` ist `cli`, `claude_code`, `claude_desktop` oder `codex`. Alle drei Befehle laufen asynchron (Login-Shell, Kindprozesse, Dateizugriffe).
+
+| Befehl | Argumente | Rückgabe |
+|---|---|---|
+| `integration_status` | `{ id }` | `{ id, supported, available, installed, stale, manual?, note? }`. `available`: das mitgelieferte Tool wurde neben der App gefunden. `stale`: eingerichtet, zeigt aber auf einen anderen Pfad. `manual`: Text zum Kopieren (Terminalbefehl bzw. PATH-Zeile), `note`: Erklärung dazu |
+| `integration_install` | `{ id }` | neuer Status, oder Fehlertext. `cli`: macOS Verknüpfung `~/.local/bin/orbo` (prüft per Login-Shell, ob der Ordner im PATH liegt, und liefert sonst die Zeile in `manual`), Windows Eintrag `<Installationsordner>\cli` in `HKCU\Environment\Path`. `claude_code`: `claude mcp add --scope user`, sonst Befehl in `manual`. `claude_desktop`: `mcpServers.orbo` in `claude_desktop_config.json`. `codex`: `[mcp_servers.orbo]` in `~/.codex/config.toml`. Bei den Dateien zuerst Sicherung `.bak` |
+| `integration_remove` | `{ id }` | neuer Status; entfernt nur den Eintrag von Orbo |
+
 ## Überwachte Ordner
 
 Neue Dateien in überwachten Ordnern wandelt Rust automatisch um (`src/watch.rs`, Logik in `orbo-core/src/watch_rules.rs`, Mechanismus: `notify`, FSEvents bzw. ReadDirectoryChangesW).
@@ -273,3 +283,20 @@ In `suggest` (Ring und „Mehr“) und `watch_targets` tragen Ziele zusätzlich 
 | `chain_step_info` | – | Alle eingebauten Ziele im selben Format, zum Beschriften gespeicherter Schritte |
 
 `convert` und die Überwachung nehmen `chain_<id>` wie jedes andere Ziel. Fortschritt ist (Schrittnummer + Schrittfortschritt) / Schrittzahl. Fehler nennen den Schritt: „Schritt 2 (WEBP): …“.
+
+## Zusammenführen (mehrere Dateien zu einer)
+
+Ziele mit `merge: true` (Gruppe „Zusammenführen“, `orbo-core/catalog/targets-merge.yaml`) machen aus mindestens zwei Dateien EINE:
+
+| ID | Titel | Eingaben | Ergebnis |
+|---|---|---|---|
+| `pdf_merge` | Zusammenführen | PDFs, Bilder dazwischen werden Seiten (mindestens eine PDF nötig) | eine PDF |
+| `images_pdf` | Als ein PDF | Bilder (alle lesbaren Formate, HEIC über `sips`) | eine PDF, ein Bild pro Seite; Voreinstellungen „Originalgröße“ (150 dpi), „A4 hoch“, „A4 quer“ (eingepasst mit 10 mm Rand) |
+| `audio_concat` | Aneinanderhängen | Audiodateien (braucht ffmpeg) | eine Audiodatei im Format der ersten Datei (MP3, wenn dieses nicht kodiert wird); Voreinstellungen MP3, M4A, WAV |
+
+- **Angebot**: `suggest` bekommt mehrere Pfade; Merge-Ziele erscheinen nur bei mindestens zwei Dateien, wenn das Ziel jede davon annimmt. Für eine einzelne Datei sind sie unsichtbar (`Target::accepts` ist `false`). Regeln mit `multi: true` setzen sie in die Mitte des Rings. Zielobjekte tragen `merge: bool`; `sub` lautet dann „N Dateien zu einer“ (Anzeige in Ring und Linse), `size_estimate` ist `null`.
+- **Reihenfolge**: immer natürliche Sortierung nach Dateiname (Groß/Klein egal, Zahlen nach Wert: „Seite 2“ vor „Seite 10“). Die Reihenfolge der Ablage zählt nicht.
+- **Ergebnis**: neben der ersten Datei (nach Sortierung) oder in `out_dir`, Name = Name der ersten Datei + „ (zusammengeführt)“ + Endung, nie überschreibend („ 2“, „ 3“ …), über eine temporäre Datei und atomares Umbenennen.
+- **`convert`**: bei einem Merge-Ziel reicht Rust EINEN Auftrag mit allen Pfaden ein (`JobQueue::submit_merge`) und liefert eine Auftrags-ID. Weniger als zwei Pfade ergeben den Fehler „… braucht mindestens zwei Dateien“. Das Toast zeigt eine Karte „3 Dateien → Zusammenführen“, nach dem Ende den Namen der Ergebnisdatei.
+- **Ausgeschlossen**: überwachte Ordner (`watch_targets` liefert sie nicht, `Target::accepts` ist für Einzeldateien `false`) und Abläufe (`chain_validate` lehnt sie ab, `chain_candidates` führt sie nicht auf).
+- **Grenzen der PDF-Zusammenführung**: Lesezeichen, benannte Ziele und Formularfelder der Quellen entfallen; Seiten, Links und Anmerkungen bleiben. Passwortgeschützte PDFs werden abgelehnt (Fehler nennt die Datei). JPEGs (Grau oder RGB, nicht per EXIF gedreht) kommen ohne Neukodierung in die PDF, alles andere als JPEG mit Qualität 90 (Transparenz wird weiß).

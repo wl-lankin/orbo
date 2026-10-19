@@ -127,14 +127,28 @@ fn decode_native(path: &Path) -> Result<DynamicImage> {
 }
 
 fn decode_via_sips(req: &Request) -> Result<DynamicImage> {
+    sips_png(req.input, req.output)
+}
+
+/// Converts with macOS `sips`; `scratch` names the temporary PNG next to it.
+fn sips_png(input: &Path, scratch: &Path) -> Result<DynamicImage> {
     if !cfg!(target_os = "macos") {
         bail!("Dieses Bildformat (HEIC, AVIF, RAW, PSD) kann unter Windows noch nicht gelesen werden, das folgt");
     }
-    let tmp = sibling(req.output, "src.png");
-    let status = Command::new("/usr/bin/sips").args(["-s", "format", "png"]).arg(req.input).arg("--out").arg(&tmp).output().context("sips konnte nicht gestartet werden")?;
+    let tmp = sibling(scratch, "src.png");
+    let status = Command::new("/usr/bin/sips").args(["-s", "format", "png"]).arg(input).arg("--out").arg(&tmp).output().context("sips konnte nicht gestartet werden")?;
     let result = if status.status.success() { ImageReader::open(&tmp).map_err(anyhow::Error::from).and_then(|r| Ok(r.with_guessed_format()?.decode()?)) } else { Err(anyhow!("Das Bild konnte nicht gelesen werden")) };
     let _ = std::fs::remove_file(&tmp);
     result
+}
+
+/// Decodes any image Orbo reads (SVG, HEIC and RAW included) from a path, for engines that handle several inputs.
+pub(crate) fn decode_file(path: &Path, format: Format, scratch: &Path) -> Result<DynamicImage> {
+    match format {
+        Format::Svg => decode_svg_file(path, 2048),
+        Format::Heic | Format::Avif | Format::Raw | Format::Psd | Format::Icns => sips_png(path, scratch),
+        _ => decode_native(path).or_else(|e| sips_png(path, scratch).map_err(|s| if cfg!(target_os = "macos") { s } else { e })),
+    }
 }
 
 fn sibling(output: &Path, suffix: &str) -> PathBuf {
@@ -145,13 +159,18 @@ fn sibling(output: &Path, suffix: &str) -> PathBuf {
 }
 
 fn decode_svg(req: &Request) -> Result<DynamicImage> {
-    let data = std::fs::read(req.input)?;
+    let edge = req.options.max_edge.or_else(|| req.f64("max_edge").map(|v| v as u32)).unwrap_or(2048);
+    decode_svg_file(req.input, edge)
+}
+
+fn decode_svg_file(path: &Path, edge: u32) -> Result<DynamicImage> {
+    let data = std::fs::read(path)?;
     let mut opts = resvg::usvg::Options::default();
     opts.fontdb_mut().load_system_fonts();
     let tree = resvg::usvg::Tree::from_data(&data, &opts).map_err(|e| anyhow!("SVG konnte nicht gelesen werden: {e}"))?;
     let size = tree.size();
     let longest = size.width().max(size.height()).max(1.0);
-    let target = req.options.max_edge.or_else(|| req.f64("max_edge").map(|v| v as u32)).unwrap_or(2048).max(1) as f32;
+    let target = edge.max(1) as f32;
     let scale = target / longest;
     let w = ((size.width() * scale).round() as u32).max(1);
     let h = ((size.height() * scale).round() as u32).max(1);
@@ -391,7 +410,7 @@ fn beautify_image(req: &Request, img: &DynamicImage) -> Result<RgbaImage> {
 
 // ---------------------------------------------------------------- encode
 
-fn flatten_white(img: &DynamicImage) -> RgbImage {
+pub(crate) fn flatten_white(img: &DynamicImage) -> RgbImage {
     if !img.color().has_alpha() {
         return img.to_rgb8();
     }
@@ -405,7 +424,7 @@ fn flatten_white(img: &DynamicImage) -> RgbImage {
     out
 }
 
-fn encode_jpeg(img: &DynamicImage, q: u8) -> Result<Vec<u8>> {
+pub(crate) fn encode_jpeg(img: &DynamicImage, q: u8) -> Result<Vec<u8>> {
     let rgb = flatten_white(img);
     let mut buf = Vec::new();
     JpegEncoder::new_with_quality(&mut buf, q).write_image(rgb.as_raw(), rgb.width(), rgb.height(), ExtendedColorType::Rgb8)?;

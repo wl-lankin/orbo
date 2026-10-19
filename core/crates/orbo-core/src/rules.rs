@@ -41,10 +41,12 @@ pub struct Condition {
     duration_lt_s: Option<f64>,
     longest_edge_gt: Option<u32>,
     ext_mismatch: Option<bool>,
+    /// True for a drop of two or more files.
+    multi: Option<bool>,
 }
 
 impl Condition {
-    fn matches(&self, a: &Analysis) -> bool {
+    fn matches(&self, a: &Analysis, count: usize) -> bool {
         let img = a.image.as_ref();
         let dur = a.media.as_ref().map(|m| m.duration_s).unwrap_or(0.0);
         let mb = a.size as f64 / 1_048_576.0;
@@ -64,6 +66,7 @@ impl Condition {
             && self.duration_lt_s.map_or(true, |v| dur > 0.0 && dur < v)
             && self.longest_edge_gt.map_or(true, |v| img.map(|i| i.width.max(i.height) > v).unwrap_or(false))
             && self.ext_mismatch.map_or(true, |v| a.ext_mismatch == v)
+            && self.multi.map_or(true, |v| (count > 1) == v)
     }
 }
 
@@ -98,13 +101,14 @@ struct RulesFile {
     rules: Vec<Rule>,
 }
 
-const BUILTIN_EXTRA_RULES: [&str; 6] = [
+const BUILTIN_EXTRA_RULES: [&str; 7] = [
     include_str!("../catalog/rules-model.yaml"),
     include_str!("../catalog/rules-font.yaml"),
     include_str!("../catalog/rules-ebook.yaml"),
     include_str!("../catalog/rules-office.yaml"),
     include_str!("../catalog/rules-cad.yaml"),
     include_str!("../catalog/rules-ai.yaml"),
+    include_str!("../catalog/rules-merge.yaml"),
 ];
 
 pub struct Rules {
@@ -122,6 +126,7 @@ pub struct Suggestion {
     pub ai: bool,
     pub group: String,
     pub chain: bool,
+    pub merge: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -171,7 +176,15 @@ impl Rules {
     }
 
     pub fn suggest(&self, catalog: &Catalog, a: &Analysis) -> Suggestions {
-        let compatible: Vec<&Target> = catalog.compatible(a);
+        self.suggest_many(catalog, std::slice::from_ref(a))
+    }
+
+    /// Suggestions for a drop of several files: only targets that fit all of them, merge targets included.
+    /// The rules look at the first file.
+    pub fn suggest_many(&self, catalog: &Catalog, files: &[Analysis]) -> Suggestions {
+        let a = &files[0];
+        let count = files.len();
+        let compatible: Vec<&Target> = catalog.compatible_all(files);
         let ok = |id: &str| compatible.iter().any(|t| t.id == id);
 
         let base = self
@@ -187,7 +200,7 @@ impl Rules {
         let mut fired = Vec::new();
 
         for rule in &self.rules {
-            if !rule.when.matches(a) {
+            if !rule.when.matches(a, count) {
                 continue;
             }
             fired.push(rule.why.clone());
@@ -252,6 +265,7 @@ impl Rules {
             ai: t.ai,
             group: t.group.clone(),
             chain: t.chain,
+            merge: t.merge,
         };
         let ring: Vec<Suggestion> = order.iter().filter_map(|id| catalog.get(id)).map(to_s).collect();
         let more: Vec<Suggestion> = compatible.iter().filter(|t| !order.contains(&t.id)).map(|t| to_s(t)).collect();

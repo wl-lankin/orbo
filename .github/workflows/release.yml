@@ -48,6 +48,12 @@ jobs:
           ls -l core/crates/orbo-app/bin
           core/crates/orbo-app/bin/ffmpeg-aarch64-apple-darwin -hide_banner -version | head -1
 
+      - name: Build command line tool sidecar
+        working-directory: core
+        run: |
+          cargo build --release -p orbo-cli --target aarch64-apple-darwin
+          cp target/aarch64-apple-darwin/release/orbo crates/orbo-app/bin/orbo-cli-aarch64-apple-darwin
+
       - name: Install tauri-cli
         run: command -v cargo-tauri >/dev/null || cargo install tauri-cli --version "^2" --locked
 
@@ -122,6 +128,13 @@ jobs:
             Copy-Item $exe.FullName "$dest/$n-x86_64-pc-windows-msvc.exe"
           }
           & "$dest/ffmpeg-x86_64-pc-windows-msvc.exe" -hide_banner -version | Select-Object -First 1
+
+      - name: Build command line tool (resource cli/orbo.exe)
+        shell: bash
+        working-directory: core
+        run: |
+          cargo build --release -p orbo-cli --target x86_64-pc-windows-msvc
+          cp target/x86_64-pc-windows-msvc/release/orbo.exe crates/orbo-app/bin/orbo-x86_64-pc-windows-msvc.exe
 
       - name: Install tauri-cli
         shell: bash

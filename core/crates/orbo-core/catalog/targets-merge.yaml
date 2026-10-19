@@ -1,0 +1,53 @@
+# Targets that turn several files into ONE (`merge: true`). They need at least two files and are hidden for a single one.
+# The inputs are sorted naturally by file name ("Seite 2" before "Seite 10"); the result lands next to the first file
+# and is named after it plus the suffix. See engines/merge.rs.
+#
+# params:
+#   op            merge_pdf (PDFs, optionally with images as pages), images_pdf (one image per page), audio_concat
+#   needs_format  at least one input must have this format (a PDF merge of images alone is images_pdf)
+#   page          images: original | a4 | a4_landscape
+#   format        audio_concat: keep (format of the first file, MP3 if that cannot be encoded) | mp3 | m4a | wav
+targets:
+  - id: pdf_merge
+    title: Zusammenführen
+    sub: eine PDF aus allen
+    output: pdf
+    engine: merge
+    accepts: [pdf, image]
+    merge: true
+    same_format: true
+    suffix: " (zusammengeführt)"
+    group: Zusammenführen
+    params: { op: merge_pdf, needs_format: pdf, page: original, quality: 90 }
+
+  - id: images_pdf
+    title: Als ein PDF
+    sub: ein Bild pro Seite
+    output: pdf
+    engine: merge
+    accepts: [image]
+    merge: true
+    suffix: " (zusammengeführt)"
+    group: Zusammenführen
+    params: { op: images_pdf, page: original, quality: 90 }
+    presets:
+      - { label: Originalgröße, params: { page: original } }
+      - { label: A4 hoch, params: { page: a4 } }
+      - { label: A4 quer, params: { page: a4_landscape } }
+
+  - id: audio_concat
+    title: Aneinanderhängen
+    sub: eine Audiodatei
+    output: mp3
+    engine: merge
+    accepts: [audio]
+    requires: [ffmpeg, audio_stream]
+    merge: true
+    same_format: true
+    suffix: " (zusammengeführt)"
+    group: Zusammenführen
+    params: { op: audio_concat, format: keep, audio_bitrate_k: 192 }
+    presets:
+      - { label: MP3, params: { format: mp3 } }
+      - { label: M4A, params: { format: m4a } }
+      - { label: WAV, params: { format: wav } }

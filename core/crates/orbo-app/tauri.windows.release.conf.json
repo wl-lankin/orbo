@@ -3,6 +3,9 @@
     "externalBin": [
       "bin/ffmpeg",
       "bin/ffprobe"
-    ]
+    ],
+    "resources": {
+      "bin/orbo-x86_64-pc-windows-msvc.exe": "cli/orbo.exe"
+    }
   }
 }

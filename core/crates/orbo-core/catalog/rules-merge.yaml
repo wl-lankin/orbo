@@ -1,0 +1,20 @@
+# Merge targets only exist for two or more files (`multi`); these rules put them in the center of the ring.
+# Loaded last so that `promote` and `default` win over the single-file rules.
+ring:
+  format: {}
+  kind: {}
+rules:
+  - why: Mehrere Bilder lassen sich zu einer PDF zusammenfassen
+    when: { multi: true, kind: [image] }
+    promote: [images_pdf]
+    default: images_pdf
+
+  - why: Mehrere PDFs (auch mit Bildern) lassen sich zusammenführen
+    when: { multi: true, kind: [document, image] }
+    promote: [pdf_merge]
+    default: pdf_merge
+
+  - why: Mehrere Audiodateien lassen sich aneinanderhängen
+    when: { multi: true, kind: [audio] }
+    promote: [audio_concat]
+    default: audio_concat

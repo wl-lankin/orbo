@@ -10,10 +10,32 @@ Orbo aktualisiert sich selbst. Die installierte App fragt alle sechs Stunden (un
 | Updater-Konfiguration (Endpunkt, öffentlicher Schlüssel, Windows `passive`) | `core/crates/orbo-app/tauri.conf.json`, Abschnitt `plugins.updater` |
 | Signierte Update-Dateien erzeugen | `core/crates/orbo-app/tauri.updater.conf.json` (nur in der Pipeline) |
 | FFmpeg-Sidecars für Windows (nur in der Pipeline) | `core/crates/orbo-app/tauri.windows.release.conf.json` |
+| Kommandozeilen-Tool `orbo` als Sidecar (Mac: `bin/orbo-cli`, Windows: Ressource `cli/orbo.exe`) | `core/crates/orbo-app/tauri.conf.json`, `tauri.windows.release.conf.json` |
 | Pipeline | `.github/workflows/release.yml` |
 | Release-Text | Abschnitt `## X.Y.Z` in `CHANGELOG.md`, sonst die Nachricht des Tags |
 
-`createUpdaterArtifacts` und `externalBin` für Windows stehen bewusst nicht in der normalen Konfiguration: Sonst verlangt jeder lokale `cargo tauri build` den Signaturschlüssel, und der lokale Windows-Cross-Build (`x86_64-pc-windows-gnu`) bräuchte FFmpeg-Dateien für diese Zielplattform.
+`createUpdaterArtifacts`, `externalBin` und das Kommandozeilen-Tool für Windows stehen bewusst nicht in der normalen Konfiguration: Sonst verlangt jeder lokale `cargo tauri build` den Signaturschlüssel, und der lokale Windows-Cross-Build (`x86_64-pc-windows-gnu`) bräuchte FFmpeg-Dateien für diese Zielplattform.
+
+## Kommandozeilen-Tool als Sidecar
+
+Das Tool `orbo` (Crate `orbo-cli`) liegt im Bundle: auf dem Mac als `Orbo.app/Contents/MacOS/orbo-cli`, unter Windows als `cli\orbo.exe` im Installationsordner. Es heißt nicht einfach `orbo`, weil das Hauptprogramm `Orbo` heißt und beide Dateinamen auf macOS und Windows nicht auseinandergehalten werden. Der Befehl `orbo` entsteht erst durch die Verknüpfung (Mac) bzw. den PATH-Eintrag (Windows), den der Nutzer in den Einstellungen anlegt. Das Tool findet FFmpeg neben sich bzw. eine Ebene höher.
+
+Tauri verlangt Sidecars mit Zielplattform im Dateinamen und prüft ihr Vorhandensein bei jedem Build der App. Die Pipeline baut das Tool deshalb vor `tauri-action`. Lokal (Apple Silicon):
+
+```bash
+cd core
+cargo build --release -p orbo-cli --target aarch64-apple-darwin
+cp target/aarch64-apple-darwin/release/orbo crates/orbo-app/bin/orbo-cli-aarch64-apple-darwin
+```
+
+Windows-Release (MSVC):
+
+```powershell
+cargo build --release -p orbo-cli --target x86_64-pc-windows-msvc
+Copy-Item target/x86_64-pc-windows-msvc/release/orbo.exe crates/orbo-app/bin/orbo-x86_64-pc-windows-msvc.exe
+```
+
+Ohne diese Datei bricht `cargo build -p orbo-app` auf dem Mac ab; für reine Testläufe genügt eine leere Platzhalterdatei (`core.yml` legt sie an). Die normale Windows-Konfiguration (`tauri.windows.conf.json`) kennt keine Sidecars, das Tool kommt dort nur über `tauri.windows.release.conf.json` in den Installer. Nach dem Bauen die App einmal ohne Pipeline prüfen: `Orbo.app/Contents/MacOS/orbo-cli targets` muss die Ziele ausgeben.
 
 ## Einmalig einrichten
 

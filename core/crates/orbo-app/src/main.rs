@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod cli_setup;
 mod commands;
 mod contextmenu;
 mod invoke;
@@ -178,6 +179,9 @@ fn main() {
             commands::context_menu_status,
             commands::context_menu_install,
             commands::context_menu_remove,
+            commands::integration_status,
+            commands::integration_install,
+            commands::integration_remove,
             commands::watch_targets,
             commands::watch_status,
             commands::chain_validate,

@@ -55,6 +55,9 @@ pub struct Target {
     pub in_ring: bool,
     #[serde(default)]
     pub steps: Vec<crate::chains::ChainStep>,
+    /// Turns several input files into one output file. Needs at least two files, so it is hidden for a single one.
+    #[serde(default)]
+    pub merge: bool,
 }
 
 /// Option controls a target supports. The UI builds its dialog from these; engines read the matching `Options` fields.
@@ -145,6 +148,27 @@ impl Target {
     }
 
     pub fn accepts(&self, a: &Analysis) -> bool {
+        !self.merge && self.accepts_file(a)
+    }
+
+    /// Merge targets: offered only for two or more files that the target accepts, plus the optional
+    /// `needs_format` param (at least one file must have this format, so images alone do not offer a PDF merge).
+    pub fn accepts_all(&self, files: &[Analysis]) -> bool {
+        if !self.merge {
+            return files.iter().all(|a| self.accepts(a));
+        }
+        if files.len() < 2 || !files.iter().all(|a| self.accepts_file(a)) {
+            return false;
+        }
+        self.param_str("needs_format").map_or(true, |f| files.iter().any(|a| a.format.id() == f))
+    }
+
+    /// Whether one input of a merge is acceptable on its own (the rest is checked by `accepts_all`).
+    pub(crate) fn accepts_file_for_merge(&self, a: &Analysis) -> bool {
+        self.accepts_file(a)
+    }
+
+    fn accepts_file(&self, a: &Analysis) -> bool {
         if self.chain {
             return crate::chains::accepts(self, a);
         }
@@ -181,6 +205,9 @@ impl Target {
 
     /// Like `accepts`, but for an intermediate file known only by its format (no stream details).
     pub(crate) fn accepts_format(&self, fmt: Format) -> bool {
+        if self.merge {
+            return false;
+        }
         let kind = kind_id(fmt.kind());
         if !self.accepts.iter().any(|x| *x == fmt.id() || x == kind) {
             return false;
@@ -250,7 +277,7 @@ pub fn kind_id(k: Kind) -> &'static str {
     }
 }
 
-const BUILTIN_TARGETS: [&str; 7] = [
+const BUILTIN_TARGETS: [&str; 8] = [
     include_str!("../catalog/targets.yaml"),
     include_str!("../catalog/targets-model.yaml"),
     include_str!("../catalog/targets-font.yaml"),
@@ -258,6 +285,7 @@ const BUILTIN_TARGETS: [&str; 7] = [
     include_str!("../catalog/targets-office.yaml"),
     include_str!("../catalog/targets-cad.yaml"),
     include_str!("../catalog/targets-ai.yaml"),
+    include_str!("../catalog/targets-merge.yaml"),
 ];
 
 static CURRENT: RwLock<Option<Arc<Catalog>>> = RwLock::new(None);
@@ -329,5 +357,10 @@ impl Catalog {
 
     pub fn compatible<'a>(&'a self, a: &Analysis) -> Vec<&'a Target> {
         self.targets.iter().filter(|t| t.accepts(a)).collect()
+    }
+
+    /// Targets that work for every one of several files. Only with two or more files do merge targets appear.
+    pub fn compatible_all<'a>(&'a self, files: &[Analysis]) -> Vec<&'a Target> {
+        self.targets.iter().filter(|t| t.accepts_all(files)).collect()
     }
 }

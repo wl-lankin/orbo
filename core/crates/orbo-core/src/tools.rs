@@ -25,7 +25,7 @@ pub fn command(program: impl AsRef<std::ffi::OsStr>) -> Command {
     cmd
 }
 
-/// Search order: env var ORBO_<NAME>, next to the running executable, `bin/` next to it, then PATH.
+/// Search order: env var ORBO_<NAME>, next to the running executable (symlinks resolved), `bin/` next to it, the parent of a `cli/` folder, then PATH.
 pub fn find(name: &str) -> Option<PathBuf> {
     if let Ok(p) = std::env::var(format!("ORBO_{}", name.to_uppercase())) {
         let p = PathBuf::from(p);
@@ -34,8 +34,14 @@ pub fn find(name: &str) -> Option<PathBuf> {
         }
     }
     if let Ok(me) = std::env::current_exe() {
-        if let Some(dir) = me.parent() {
-            for candidate in [dir.join(exe(name)), dir.join("bin").join(exe(name))] {
+        // The CLI is started through a symlink (~/.local/bin/orbo) or from a subfolder of the install dir (Windows: cli/).
+        let real = me.canonicalize().unwrap_or(me);
+        if let Some(dir) = real.parent() {
+            let mut dirs = vec![dir.to_path_buf(), dir.join("bin")];
+            if dir.file_name().is_some_and(|n| n == "cli") {
+                dirs.extend(dir.parent().map(|up| up.to_path_buf()));
+            }
+            for candidate in dirs.into_iter().map(|d| d.join(exe(name))) {
                 if candidate.is_file() {
                     return Some(candidate);
                 }

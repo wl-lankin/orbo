@@ -426,6 +426,56 @@
   $('ctxRemove').addEventListener('click', () => ctxRun('context_menu_remove'));
   invoke('context_menu_status').then(ctxRender).catch(() => {});
 
+  /* ---------- Kommandozeile und KI-Programme ---------- */
+  const INTEG = [
+    { id: 'cli', title: 'Kommandozeilen-Tool', idle: 'Macht den Befehl „orbo“ im Terminal verfügbar.', button: 'Kommandozeilen-Tool einrichten' },
+    { id: 'claude_code', title: 'Claude Code', idle: 'Orbo-Werkzeuge für Claude Code (MCP-Server).', button: 'In Claude Code einrichten' },
+    { id: 'claude_desktop', title: 'Claude Desktop', idle: 'Orbo-Werkzeuge für Claude Desktop (MCP-Server).', button: 'In Claude Desktop einrichten' },
+    { id: 'codex', title: 'Codex', idle: 'Orbo-Werkzeuge für Codex (MCP-Server).', button: 'In Codex einrichten' },
+  ];
+  const integEls = {};
+  INTEG.forEach(d => {
+    const wrap = document.createElement('div');
+    wrap.hidden = true;
+    wrap.innerHTML = '<div class="row"><span class="lbl"><span class="t"></span><small class="s"></small></span><span class="ctxbtns"><button class="btn do" type="button"></button><button class="btn rm" type="button" hidden>Entfernen</button></span></div>' +
+      '<div class="hintrow" hidden><code></code><button class="btn cp" type="button">Kopieren</button></div>';
+    $('integ').appendChild(wrap);
+    const e = integEls[d.id] = { wrap, t: wrap.querySelector('.t'), s: wrap.querySelector('.s'), doB: wrap.querySelector('.do'), rm: wrap.querySelector('.rm'), hint: wrap.querySelector('.hintrow'), code: wrap.querySelector('code'), cp: wrap.querySelector('.cp') };
+    e.t.textContent = d.title;
+    e.doB.addEventListener('click', () => integRun(d, 'integration_install'));
+    e.rm.addEventListener('click', () => integRun(d, 'integration_remove'));
+    e.cp.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(e.code.textContent); e.cp.textContent = 'Kopiert'; setTimeout(() => { e.cp.textContent = 'Kopieren'; }, 1500); }
+      catch { const r = document.createRange(); r.selectNodeContents(e.code); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+    });
+  });
+  function integRender(d, st, msg) {
+    const e = integEls[d.id];
+    if (!st || !st.supported) { e.wrap.hidden = true; return; }
+    e.wrap.hidden = false;
+    let text = d.idle;
+    if (!st.available) text = 'Das Kommandozeilen-Tool fehlt in dieser Orbo-Installation.';
+    else if (st.installed && st.stale) text = 'Eingerichtet, zeigt aber auf einen anderen Ort. „Neu einrichten“ korrigiert das.';
+    else if (st.installed) text = 'Eingerichtet.';
+    e.s.textContent = msg || (st.note && !st.manual ? st.note : text);
+    e.doB.textContent = st.installed ? 'Neu einrichten' : d.button;
+    e.doB.disabled = !st.available;
+    e.rm.hidden = !st.installed;
+    e.hint.hidden = !st.manual;
+    if (st.manual) {
+      e.code.textContent = st.manual;
+      if (st.note) e.s.textContent = msg || st.note;
+    }
+  }
+  async function integRun(d, cmd) {
+    const e = integEls[d.id];
+    e.doB.disabled = e.rm.disabled = true;
+    try { integRender(d, await invoke(cmd, { id: d.id })); }
+    catch (err) { integRender(d, await invoke('integration_status', { id: d.id }).catch(() => null), String(err)); }
+    e.rm.disabled = false;
+  }
+  INTEG.forEach(d => invoke('integration_status', { id: d.id }).then(st => integRender(d, st)).catch(() => {}));
+
   $('support').addEventListener('click', () => invoke('support').catch(() => {}));
 
   listen('settings', e => {

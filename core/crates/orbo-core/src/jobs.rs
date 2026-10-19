@@ -71,19 +71,33 @@ pub struct JobSpec {
     pub options: Options,
 }
 
+/// Several files that become one: `inputs` is sorted naturally by file name before merging.
+#[derive(Debug, Clone)]
+pub struct MergeSpec {
+    pub inputs: Vec<PathBuf>,
+    pub target: String,
+    pub options: Options,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "event", rename_all = "snake_case")]
 pub enum JobEvent {
-    Started { id: JobId, input: PathBuf, target: String },
+    /// `input` is the first file; `count` is greater than 1 for a merge.
+    Started { id: JobId, input: PathBuf, target: String, count: usize },
     Progress { id: JobId, fraction: f32 },
     Finished { id: JobId, output: PathBuf, bytes: u64, millis: u128 },
     Failed { id: JobId, error: String },
     Cancelled { id: JobId },
 }
 
+enum Work {
+    One(JobSpec),
+    Merge(MergeSpec),
+}
+
 struct Queued {
     id: JobId,
-    spec: JobSpec,
+    work: Work,
     cancel: Arc<AtomicBool>,
 }
 
@@ -119,11 +133,20 @@ impl JobQueue {
     }
 
     pub fn submit(&self, spec: JobSpec) -> JobId {
+        self.enqueue(Work::One(spec))
+    }
+
+    /// One job that merges all `inputs` into a single file.
+    pub fn submit_merge(&self, spec: MergeSpec) -> JobId {
+        self.enqueue(Work::Merge(spec))
+    }
+
+    fn enqueue(&self, work: Work) -> JobId {
         let id = self.next.fetch_add(1, Ordering::Relaxed);
         let cancel = Arc::new(AtomicBool::new(false));
         self.cancels.lock().unwrap().insert(id, cancel.clone());
         if let Some(tx) = &self.tx {
-            let _ = tx.send(Queued { id, spec, cancel });
+            let _ = tx.send(Queued { id, work, cancel });
         }
         id
     }
@@ -148,12 +171,20 @@ impl JobQueue {
 }
 
 fn run_one(job: Queued, events: &Sender<JobEvent>) {
-    let Queued { id, spec, cancel } = job;
-    let _ = events.send(JobEvent::Started { id, input: spec.input.clone(), target: spec.target.clone() });
+    let Queued { id, work, cancel } = job;
+    let (input, target, count) = match &work {
+        Work::One(s) => (s.input.clone(), s.target.clone(), 1),
+        Work::Merge(s) => (s.inputs.first().cloned().unwrap_or_default(), s.target.clone(), s.inputs.len()),
+    };
+    let _ = events.send(JobEvent::Started { id, input, target, count });
     let start = Instant::now();
-    let result = convert_blocking(&spec, id, &cancel, &|f| {
+    let progress = |f: f32| {
         let _ = events.send(JobEvent::Progress { id, fraction: f.clamp(0.0, 1.0) });
-    });
+    };
+    let result = match &work {
+        Work::One(spec) => convert_blocking(spec, id, &cancel, &progress),
+        Work::Merge(spec) => convert_merge_blocking(spec, id, &cancel, &progress),
+    };
     let ev = match result {
         Ok(output) => {
             let bytes = std::fs::metadata(&output).map(|m| if m.is_dir() { dir_bytes(&output) } else { m.len() }).unwrap_or(0);
@@ -191,6 +222,9 @@ pub fn effective_params(target: &Target, options: &Options) -> serde_json::Value
 pub fn convert_blocking(spec: &JobSpec, job_id: JobId, cancel: &AtomicBool, progress: &(dyn Fn(f32) + Sync)) -> Result<PathBuf> {
     let catalog = Catalog::current();
     let target = catalog.get(&spec.target).ok_or_else(|| anyhow!("Unbekanntes Ziel: {}", spec.target))?;
+    if target.merge {
+        anyhow::bail!("„{}“ braucht mindestens zwei Dateien", target.title);
+    }
     let analysis: Analysis = analyze(&spec.input)?;
     if !target.accepts(&analysis) {
         anyhow::bail!("{} kann nicht nach {} umgewandelt werden", analysis.format.id(), target.id);
@@ -244,6 +278,50 @@ pub fn convert_blocking(spec: &JobSpec, job_id: JobId, cancel: &AtomicBool, prog
         Some(stem) => output::next_free(&dir, &stem, &target.ext_for(&analysis)),
         None => wanted,
     };
+    let final_path = output::commit(&temp, &wanted)?;
+    progress(1.0);
+    Ok(final_path)
+}
+
+/// Runs a merge on the current thread: all inputs become one file next to the first one (in natural order),
+/// named after it plus the target's suffix, never overwriting. Returns the path of the result.
+pub fn convert_merge_blocking(spec: &MergeSpec, job_id: JobId, cancel: &AtomicBool, progress: &(dyn Fn(f32) + Sync)) -> Result<PathBuf> {
+    let catalog = Catalog::current();
+    let target = catalog.get(&spec.target).ok_or_else(|| anyhow!("Unbekanntes Ziel: {}", spec.target))?;
+    if !target.merge {
+        anyhow::bail!("„{}“ verarbeitet jede Datei einzeln", target.title);
+    }
+    if spec.inputs.len() < 2 {
+        anyhow::bail!("„{}“ braucht mindestens zwei Dateien (angegeben: {})", target.title, spec.inputs.len());
+    }
+    let inputs = output::natural_sorted(&spec.inputs);
+    let analyses = inputs.iter().map(|p| analyze(p)).collect::<Result<Vec<_>>>()?;
+    if let Some(bad) = analyses.iter().find(|a| !target.accepts_file_for_merge(a)) {
+        anyhow::bail!("{} ({}) passt nicht zu „{}“", bad.path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), bad.format.id(), target.title);
+    }
+    if !target.accepts_all(&analyses) {
+        anyhow::bail!("„{}“ braucht mindestens eine PDF unter den Dateien", target.title);
+    }
+    let params = effective_params(target, &spec.options);
+    let dir = spec.options.out_dir.clone().unwrap_or_else(|| inputs[0].parent().map(|p| p.to_path_buf()).unwrap_or_default());
+    let stem = format!("{}{}{}", output::stem_of(&inputs[0]), target.suffix, spec.options.name_suffix.as_deref().unwrap_or(""));
+    let wanted = output::next_free(&dir, &stem, &engines::merge::output_ext(target, &params, &analyses));
+    let temp = output::temp_for(&wanted, job_id);
+
+    let req = engines::merge::MergeRequest { inputs: &inputs, analyses: &analyses, output: &temp, target, params: &params, options: &spec.options };
+    let cancelled = || cancel.load(Ordering::Relaxed);
+    let final_stem = std::sync::Mutex::new(None);
+    let ctx = Ctx { progress, cancelled: &cancelled, final_stem: &final_stem };
+    progress(0.0);
+    let res = engines::merge::convert(&req, &ctx);
+    if res.is_err() || cancelled() {
+        let _ = std::fs::remove_file(&temp);
+        res?;
+        anyhow::bail!("abgebrochen");
+    }
+    if !temp.exists() {
+        anyhow::bail!("Die Ausgabe wurde nicht geschrieben");
+    }
     let final_path = output::commit(&temp, &wanted)?;
     progress(1.0);
     Ok(final_path)

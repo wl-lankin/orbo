@@ -1,7 +1,7 @@
 //! Video and audio conversion by driving ffmpeg as a child process.
 
 use std::io::{BufRead, BufReader};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::mpsc::{self, RecvTimeoutError};
 use std::sync::{Arc, Mutex};
@@ -10,6 +10,7 @@ use std::time::Duration;
 use anyhow::{anyhow, bail, Result};
 
 use super::{Ctx, Engine, Request};
+use crate::analyze::Analysis;
 use crate::format::Format;
 use crate::tools;
 
@@ -766,4 +767,63 @@ fn run(ff: &Path, plan: &Plan, ctx: &Ctx) -> Result<()> {
         bail!("ffmpeg ist fehlgeschlagen:\n{}", tail.join("\n"));
     }
     Ok(())
+}
+
+// ---------------------------------------------------------------- concatenation
+
+/// (ffmpeg muxer, codec key for `audio_enc_args`, file extension) of a concatenated audio file.
+/// "keep" follows the first file and falls back to MP3 for formats Orbo does not encode.
+pub(crate) fn concat_format(first: Format, wanted: &str) -> (&'static str, &'static str, &'static str) {
+    let key = if wanted == "keep" {
+        match first {
+            Format::Mp3 => "mp3",
+            Format::M4a => "m4a",
+            Format::Wav => "wav",
+            Format::Flac => "flac",
+            Format::Ogg => "ogg",
+            Format::Opus => "opus",
+            Format::Aiff => "aiff",
+            Format::Aac => "aac",
+            _ => "mp3",
+        }
+    } else {
+        wanted
+    };
+    match key {
+        "m4a" => ("ipod", "aac", "m4a"),
+        "wav" => ("wav", "pcm", "wav"),
+        "flac" => ("flac", "flac", "flac"),
+        "ogg" => ("ogg", "vorbis", "ogg"),
+        "opus" => ("opus", "opus", "opus"),
+        "aiff" => ("aiff", "pcm_be", "aiff"),
+        "aac" => ("adts", "aac", "aac"),
+        _ => ("mp3", "mp3", "mp3"),
+    }
+}
+
+/// Joins audio files end to end into one re-encoded file. All inputs are brought to the sample rate and
+/// channel layout of the first one so that ffmpeg's concat filter accepts them.
+pub(crate) fn concat(inputs: &[PathBuf], analyses: &[Analysis], wanted: &str, bitrate_k: u32, output: &Path, ctx: &Ctx) -> Result<()> {
+    let ff = tools::ffmpeg().ok_or_else(|| anyhow!("ffmpeg wurde nicht gefunden"))?;
+    let (container, codec, _) = concat_format(analyses[0].format, wanted);
+    let first = analyses[0].media.as_ref().and_then(|m| m.audio.as_ref());
+    let rate = first.map(|a| a.sample_rate).filter(|r| *r > 0).unwrap_or(44100);
+    let layout = if first.map(|a| a.channels) == Some(1) { "mono" } else { "stereo" };
+
+    let mut args = base_args();
+    let mut graph = String::new();
+    for (i, p) in inputs.iter().enumerate() {
+        push(&mut args, &["-i"]);
+        args.push(p.to_string_lossy().into_owned());
+        graph.push_str(&format!("[{i}:a:0]aformat=sample_fmts=fltp:sample_rates={rate}:channel_layouts={layout}[a{i}];"));
+    }
+    for i in 0..inputs.len() {
+        graph.push_str(&format!("[a{i}]"));
+    }
+    graph.push_str(&format!("concat=n={}:v=0:a=1[out]", inputs.len()));
+    push(&mut args, &["-filter_complex", &graph, "-map", "[out]"]);
+    args.extend(audio_enc_args(codec, bitrate_k)?);
+    push(&mut args, &["-f", muxer(container), &output.to_string_lossy()]);
+    let out_dur = analyses.iter().filter_map(|a| a.media.as_ref()).map(|m| m.duration_s).sum();
+    run(ff, &Plan { args, out_dur }, ctx)
 }

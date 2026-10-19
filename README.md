@@ -35,6 +35,55 @@ Eine Datei auf dem simulierten Desktop ziehen, dann **⌥ / Alt** halten oder di
 
 Projektordner `Projects/Orbo`, Crates `orbo-core`, `orbo-cli` (Befehl `orbo`), `orbo-app`.
 
+## Kommandozeile
+
+Die App bringt das Kommandozeilen-Tool `orbo` mit. In den Einstellungen (Allgemein, „Kommandozeile und KI-Programme“) richtest du es mit einem Klick ein. Auf dem Mac legt Orbo dafür die Verknüpfung `~/.local/bin/orbo` an und zeigt dir die Zeile für `~/.zprofile`, falls der Ordner noch nicht im PATH liegt. Unter Windows kommt der Ordner mit dem Tool in den Benutzer-PATH. Danach funktioniert in einem neuen Terminal:
+
+```bash
+orbo targets                          # alle Ziele, auch eigene Abläufe und aktivierte KI-Ziele
+orbo analyze foto.heic                # Format und Eigenschaften
+orbo suggest video.mov --explain      # was der Ring anbieten würde
+orbo convert foto.heic --to jpg --quality 85
+orbo convert *.png --to webp --out ~/Desktop/web
+orbo convert clip.mov --to mail_video
+orbo convert bericht.pdf --to chain_mein_ablauf
+orbo convert "Seite 1.pdf" "Seite 2.pdf" "Seite 10.pdf" --to pdf_merge   # eine PDF aus allen
+orbo convert scans/*.jpg --to images_pdf --preset "A4 hoch"
+orbo convert teil1.mp3 teil2.mp3 --to audio_concat
+```
+
+Ziele mit „(mehrere Dateien)“ in `orbo targets` machen aus mindestens zwei Dateien eine: `pdf_merge` (PDFs, Bilder werden Seiten), `images_pdf` (ein Bild pro Seite, Voreinstellungen Originalgröße, A4 hoch, A4 quer) und `audio_concat` (Audiodateien aneinanderhängen, Voreinstellungen MP3, M4A, WAV). Die Reihenfolge ergibt sich immer aus dem Dateinamen in natürlicher Sortierung („Seite 2“ vor „Seite 10“). Das Ergebnis liegt neben der ersten Datei und heißt „<erste Datei> (zusammengeführt).<Endung>“; Bestehendes wird nie überschrieben. Im Ring erscheinen sie, sobald du mehrere passende Dateien gleichzeitig ziehst.
+
+Das Tool liest die Einstellungen der App (Abläufe und KI-Ziele). Mit `--no-settings` ignoriert es sie. Bestehende Dateien überschreibt es nie.
+
+### MCP-Server für Claude und Codex
+
+`orbo mcp` startet einen MCP-Server über stdio. Claude Code, Claude Desktop und Codex können damit Dateien analysieren und umwandeln lassen. In den Einstellungen gibt es dafür je einen Knopf („In Claude Code einrichten“, „In Claude Desktop einrichten“, „In Codex einrichten“), jeweils mit „Entfernen“. Orbo trägt dabei nur den Eintrag `orbo` ein und lässt alles andere in den Konfigurationsdateien unverändert; von der Datei wird vorher eine Sicherung `.bak` angelegt.
+
+Werkzeuge:
+
+| Name | Zweck |
+|---|---|
+| `orbo_suggest(paths)` | Analyse und Vorschläge: empfohlenes Ziel, bis zu sechs Ring-Vorschläge, alle kompatiblen Ziele; bei mehreren Pfaden zusätzlich `merge_targets` (Dateien zu einer zusammenführen) |
+| `orbo_list_targets(kind?, format?)` | Ziele, optional nach Dateiart oder Eingabeformat gefiltert |
+| `orbo_convert(paths, target, preset?, quality?, max_edge?, out_dir?)` | Umwandlung nacheinander, Ergebnis neben dem Original, nie überschreibend; Merge-Ziele (`pdf_merge`, `images_pdf`, `audio_concat`) machen aus allen Pfaden eine Datei |
+| `orbo_analyze(path)` | Format und Eigenschaften einer Datei |
+
+Manuell einrichten, falls du die Knöpfe nicht nutzen willst (Pfad zur eingebauten `orbo` anpassen):
+
+```bash
+claude mcp add --scope user orbo -- "/Applications/Orbo.app/Contents/MacOS/orbo-cli" mcp
+```
+
+```toml
+# ~/.codex/config.toml
+[mcp_servers.orbo]
+command = "/Applications/Orbo.app/Contents/MacOS/orbo-cli"
+args = ["mcp"]
+```
+
+Es gibt keine Werkzeuge zum Löschen und keine freie Shell. Pfade müssen absolut sein und existieren.
+
 ## Modell
 
 Orbo ist kostenlos, ohne Werbung, ohne Konto. Freiwillige Unterstützung über „Orbo unterstützen“ in den Einstellungen (Über). Hintergrund und verworfenes Pro-Modell: [docs/LIZENZEN.md](docs/LIZENZEN.md). Vergleichbares Projekt: Filee (filee.sh, MIT, Windows-Schwerpunkt).

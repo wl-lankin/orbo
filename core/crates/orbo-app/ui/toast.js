@@ -42,7 +42,7 @@
     });
   }
 
-  function create(id, input, target, title) {
+  function create(id, input, target, title, count) {
     const kind = kindFor(target, input);
     const wrap = document.createElement('div');
     wrap.className = 'wrap';
@@ -61,7 +61,8 @@
       <div class="more" hidden></div>`;
     wrap.appendChild(el);
     const c = { id, wrap, el, kind, input, target, title, output: null, state: 'running', expanded: false };
-    el.querySelector('.t').textContent = `${baseName(input)} → ${title || String(target).toUpperCase()}`;
+    const what = count > 1 ? `${count} Dateien` : baseName(input);
+    el.querySelector('.t').textContent = `${what} → ${title || String(target).toUpperCase()}`;
     el.querySelector('.sub').innerHTML = '<span class="nm">Wird vorbereitet …</span>';
     el.querySelector('.ico').addEventListener('click', () => { if (c.state === 'running') invoke('cancel_job', { id }).catch(() => {}); });
     flip(() => { stack.appendChild(wrap); cards.set(id, c); });
@@ -223,7 +224,7 @@
     let c = cards.get(p.id);
     if (p.event === 'started') {
       if (c) return;
-      create(p.id, p.input, p.target, p.title);
+      create(p.id, p.input, p.target, p.title, p.count);
       return;
     }
     if (!c) {

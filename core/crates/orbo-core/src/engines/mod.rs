@@ -10,6 +10,7 @@ pub mod ebook;
 pub mod font;
 pub mod image;
 pub mod media;
+pub mod merge;
 pub mod model3d;
 pub mod office;
 
@@ -79,6 +80,7 @@ pub fn get(name: &str) -> Option<&'static dyn Engine> {
         "cad" => Some(&cad::Engine_),
         "ai" => Some(&ai::AiEngine),
         "chain" => Some(&chain::ChainEngine),
+        "merge" => Some(&merge::MergeEngine),
         _ => None,
     }
 }

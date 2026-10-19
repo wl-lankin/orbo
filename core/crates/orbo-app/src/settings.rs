@@ -113,7 +113,7 @@ fn dir_for(name: &str) -> PathBuf {
 }
 
 pub fn app_dir() -> PathBuf {
-    dir_for("Orbo")
+    orbo_core::appconfig::app_dir()
 }
 
 fn path() -> PathBuf {

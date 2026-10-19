@@ -1,15 +1,20 @@
+mod mcp;
+
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use orbo_core::catalog::Catalog;
-use orbo_core::jobs::{convert_blocking, CropRect, JobSpec, Options};
+use orbo_core::jobs::{convert_blocking, convert_merge_blocking, CropRect, JobSpec, MergeSpec, Options};
 use orbo_core::rules::Rules;
 
 #[derive(Parser)]
 #[command(name = "orbo", about = "Orbo: Dateien lokal umwandeln")]
 struct Cli {
+    /// Einstellungen der Orbo-App (Abläufe, KI-Ziele) nicht laden
+    #[arg(long, global = true)]
+    no_settings: bool,
     #[command(subcommand)]
     cmd: Cmd,
 }
@@ -22,16 +27,17 @@ enum Cmd {
         #[arg(long)]
         json: bool,
     },
-    /// Zeigt, was der Ring für diese Datei anbieten würde
+    /// Zeigt, was der Ring für diese Datei anbieten würde (bei mehreren Dateien auch Zusammenführen)
     Suggest {
-        file: PathBuf,
+        #[arg(required = true)]
+        files: Vec<PathBuf>,
         #[arg(long)]
         json: bool,
         /// Welche Regeln gegriffen haben
         #[arg(long)]
         explain: bool,
     },
-    /// Wandelt eine oder mehrere Dateien um
+    /// Wandelt eine oder mehrere Dateien um; Ziele mit „mehrere Dateien“ (z. B. pdf_merge) machen aus allen eine
     Convert {
         #[arg(required = true)]
         files: Vec<PathBuf>,
@@ -71,10 +77,16 @@ enum Cmd {
     },
     /// Listet alle Ziele
     Targets,
+    /// Startet den MCP-Server (stdio) für Claude, Codex und andere KI-Programme
+    Mcp,
 }
 
 fn main() -> Result<()> {
-    match Cli::parse().cmd {
+    let cli = Cli::parse();
+    if !cli.no_settings {
+        orbo_core::appconfig::apply_app_settings();
+    }
+    match cli.cmd {
         Cmd::Analyze { file, json } => {
             let a = orbo_core::analyze(&file)?;
             if json {
@@ -89,8 +101,8 @@ fn main() -> Result<()> {
                 }
             }
         }
-        Cmd::Suggest { file, json, explain } => {
-            let (_, s) = orbo_core::suggest(&file)?;
+        Cmd::Suggest { files, json, explain } => {
+            let (_, s) = orbo_core::suggest_many(&files)?;
             if json {
                 println!("{}", serde_json::to_string_pretty(&s)?);
             } else {
@@ -129,6 +141,26 @@ fn main() -> Result<()> {
                 out_dir: out,
                 ..Default::default()
             };
+            let merge = Catalog::current().get(&to).map_or(false, |t| t.merge);
+            if merge {
+                if files.len() < 2 {
+                    eprintln!("✗ „{to}“ führt mehrere Dateien zu einer zusammen und braucht mindestens zwei Eingabedateien (angegeben: {}).", files.len());
+                    std::process::exit(1);
+                }
+                let started = std::time::Instant::now();
+                let spec = MergeSpec { inputs: files.clone(), target: to.clone(), options };
+                match convert_merge_blocking(&spec, 1, &AtomicBool::new(false), &|_| {}) {
+                    Ok(p) => {
+                        let bytes = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(0);
+                        println!("✓ {} Dateien → {} ({} KB, {} ms)", files.len(), p.display(), bytes / 1024, started.elapsed().as_millis());
+                        return Ok(());
+                    }
+                    Err(e) => {
+                        eprintln!("✗ {e:#}");
+                        std::process::exit(1);
+                    }
+                }
+            }
             let mut failed = 0;
             for (i, input) in files.into_iter().enumerate() {
                 let spec = JobSpec { input: input.clone(), target: to.clone(), options: options.clone() };
@@ -150,15 +182,17 @@ fn main() -> Result<()> {
         }
         Cmd::Targets => {
             let mut group = String::new();
-            for t in &Catalog::builtin().targets {
+            for t in &Catalog::current().targets {
                 if t.group != group {
                     group = t.group.clone();
                     println!("\n{group}");
                 }
-                println!("  {:<16} {:<14} {:<30} ← {}", t.id, t.title, t.sub, t.accepts.join(", "));
+                let many = if t.merge { "  (mehrere Dateien)" } else { "" };
+                println!("  {:<16} {:<14} {:<30} ← {}{many}", t.id, t.title, t.sub, t.accepts.join(", "));
             }
             Rules::builtin().validate(Catalog::builtin())?;
         }
+        Cmd::Mcp => mcp::serve()?,
     }
     Ok(())
 }

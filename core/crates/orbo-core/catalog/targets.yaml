@@ -5,6 +5,7 @@
 # controls:  what the options dialog offers (quality, resize, crop, aspect, rotate, trim, target_size,
 #            audio_bitrate, sample_rate, channels, fps, background, padding, corners, shadow)
 # dialog:    open the options dialog right after the drop
+# merge:     several files become ONE (see targets-merge.yaml); hidden for a single file, never in chains or watched folders
 # params:    engine-specific, documented at the top of each engine file
 
 targets:

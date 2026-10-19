@@ -55,7 +55,7 @@ fn check_cancel(ctx: &Ctx) -> Result<()> {
 
 // ---------- PDF ----------
 
-fn load_pdf(path: &Path) -> Result<Document> {
+pub(crate) fn load_pdf(path: &Path) -> Result<Document> {
     let doc = Document::load(path).map_err(|e| anyhow!("PDF konnte nicht gelesen werden: {e}"))?;
     if doc.is_encrypted() {
         bail!("Die PDF ist passwortgeschützt");
@@ -63,7 +63,7 @@ fn load_pdf(path: &Path) -> Result<Document> {
     Ok(doc)
 }
 
-fn save_pdf(doc: &mut Document, path: &Path) -> Result<()> {
+pub(crate) fn save_pdf(doc: &mut Document, path: &Path) -> Result<()> {
     doc.save(path).map_err(|e| anyhow!("PDF konnte nicht geschrieben werden: {e}"))?;
     Ok(())
 }

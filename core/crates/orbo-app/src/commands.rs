@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use orbo_core::analyze::Analysis;
 use orbo_core::catalog::{kind_id, Catalog, Target};
 use orbo_core::format::Kind;
-use orbo_core::jobs::{JobSpec, Options};
+use orbo_core::jobs::{JobSpec, MergeSpec, Options};
 use orbo_core::rules::{Rules, Suggestion};
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -75,7 +75,7 @@ fn file_info(a: &Analysis) -> FileInfo {
 
 /// Rough size of the result in bytes for the ring's live estimate. Deliberately simple.
 fn estimate(t: &Target, a: &Analysis) -> Option<u64> {
-    if t.chain {
+    if t.chain || t.merge {
         return None;
     }
     if t.keeps_format() && matches!(a.kind, Kind::Audio | Kind::Video) {
@@ -163,15 +163,17 @@ impl ParamBool for Target {
     }
 }
 
-fn target_json(s: &Suggestion, a: &Analysis) -> Value {
+fn target_json(s: &Suggestion, a: &Analysis, files: usize) -> Value {
     let cat = Catalog::current();
     let t = cat.get(&s.id);
     let kind = t
         .map(|t| if t.produces_folder() { "folder".to_string() } else { t.output_format().map(|f| kind_id(f.kind()).to_string()).unwrap_or_default() })
         .unwrap_or_default();
+    // The ring's lens shows the sub line, so a merge says how many files become one.
+    let sub = if s.merge { format!("{files} Dateien zu einer") } else { s.sub.clone() };
     json!({
-        "id": s.id, "title": s.title, "sub": s.sub, "ext": s.ext, "intent": s.intent, "ai": s.ai, "group": s.group,
-        "kind": kind, "chain": s.chain,
+        "id": s.id, "title": s.title, "sub": sub, "ext": s.ext, "intent": s.intent, "ai": s.ai, "group": s.group,
+        "kind": kind, "chain": s.chain, "merge": s.merge,
         "dialog": t.map(|t| t.dialog).unwrap_or(false),
         "controls": t.map(|t| t.controls.clone()).unwrap_or_default(),
         "presets": t.map(|t| t.presets.iter().map(|p| p.label.clone()).collect::<Vec<_>>()).unwrap_or_default(),
@@ -188,19 +190,14 @@ pub fn suggest_value(paths: &[PathBuf]) -> Result<Value, String> {
     for a in &analyses {
         eprintln!("[orbo] suggest {} → {} / {}", a.path.display(), a.format.id(), kind_id(a.kind));
     }
-    let catalog = Catalog::current();
-    let s = Rules::builtin().suggest(&catalog, first);
-    // With several files only targets that work for all of them stay.
-    let fits_all = |id: &str| {
-        let Some(t) = catalog.get(id) else { return false };
-        analyses.iter().all(|a| t.accepts(a))
-    };
-    let ring: Vec<Value> = s.ring.iter().filter(|x| fits_all(&x.id)).map(|x| target_json(x, first)).collect();
-    let more: Vec<Value> = s.more.iter().filter(|x| fits_all(&x.id)).map(|x| target_json(x, first)).collect();
-    let default = s.default.filter(|d| fits_all(d)).or_else(|| ring.first().and_then(|r| r["id"].as_str().map(String::from)));
+    // With several files only targets that work for all of them stay; merge targets appear from two files on.
+    let s = Rules::builtin().suggest_many(&Catalog::current(), &analyses);
+    let n = analyses.len();
+    let ring: Vec<Value> = s.ring.iter().map(|x| target_json(x, first, n)).collect();
+    let more: Vec<Value> = s.more.iter().map(|x| target_json(x, first, n)).collect();
     Ok(json!({
         "files": analyses.iter().map(file_info).collect::<Vec<_>>(),
-        "default": default,
+        "default": s.default,
         "ring": ring,
         "more": more,
     }))
@@ -220,6 +217,9 @@ pub async fn convert(app: AppHandle, paths: Vec<PathBuf>, target: String, preset
     let mut options = options.unwrap_or_default();
     if options.preset.is_none() {
         options.preset = preset;
+    }
+    if t.merge && paths.len() < 2 {
+        return Err(format!("„{}“ braucht mindestens zwei Dateien", t.title));
     }
     let params = orbo_core::jobs::effective_params(t, &options);
     if params.get("pick_folder").and_then(|v| v.as_bool()).unwrap_or(false) && options.out_dir.is_none() {
@@ -254,6 +254,12 @@ pub fn apply_output_settings(settings: &crate::settings::Settings, t: &Target, o
 }
 
 pub fn submit_jobs(state: &AppState, paths: Vec<PathBuf>, target: &str, t: &Target, options: &Options) -> Vec<u64> {
+    if t.merge {
+        let bytes = paths.iter().map(|p| std::fs::metadata(p).map(|m| m.len()).unwrap_or(0)).sum();
+        let id = state.queue.submit_merge(MergeSpec { inputs: paths, target: target.to_string(), options: options.clone() });
+        state.jobs.lock().unwrap().insert(id, (t.title.clone(), bytes));
+        return vec![id];
+    }
     let mut ids = Vec::new();
     for p in paths {
         let input_bytes = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(0);
@@ -485,14 +491,14 @@ pub fn support() -> Result<(), String> {
     open_url(SUPPORT_URL.to_string())
 }
 
-/// Targets a watched folder can use: no AI and nothing that needs a per-file folder prompt.
+/// Targets a watched folder can use: no AI, no merge (a watcher sees one file at a time) and nothing that needs a per-file folder prompt.
 #[tauri::command]
 pub fn watch_targets() -> Value {
     let picks = |p: &serde_json::Value| p.get("pick_folder").and_then(|v| v.as_bool()).unwrap_or(false);
     json!(Catalog::current()
         .targets
         .iter()
-        .filter(|t| !t.ai && !picks(&t.params))
+        .filter(|t| !t.ai && !t.merge && !picks(&t.params))
         .map(|t| json!({ "id": t.id, "title": t.title, "sub": t.sub, "group": t.group, "chain": t.chain,
                           "presets": t.presets.iter().filter(|p| !picks(&p.params)).map(|p| p.label.clone()).collect::<Vec<_>>() }))
         .collect::<Vec<_>>())
@@ -534,6 +540,27 @@ pub fn context_menu_install() -> Result<crate::contextmenu::Status, String> {
 pub fn context_menu_remove() -> Result<crate::contextmenu::Status, String> {
     crate::contextmenu::remove()?;
     Ok(crate::contextmenu::status())
+}
+
+/// Runs blocking setup work (login shell, child processes, file edits) off the main thread.
+async fn blocking<T: Send + 'static>(f: impl FnOnce() -> Result<T, String> + Send + 'static) -> Result<T, String> {
+    tauri::async_runtime::spawn_blocking(f).await.map_err(|e| e.to_string())?
+}
+
+/// `id` is one of "cli", "claude_code", "claude_desktop", "codex".
+#[tauri::command]
+pub async fn integration_status(id: String) -> Result<crate::cli_setup::Status, String> {
+    blocking(move || Ok(crate::cli_setup::status(&id))).await
+}
+
+#[tauri::command]
+pub async fn integration_install(id: String) -> Result<crate::cli_setup::Status, String> {
+    blocking(move || crate::cli_setup::install(&id)).await
+}
+
+#[tauri::command]
+pub async fn integration_remove(id: String) -> Result<crate::cli_setup::Status, String> {
+    blocking(move || crate::cli_setup::remove(&id)).await
 }
 
 fn step_target_json(t: &Target) -> Value {

@@ -75,6 +75,9 @@ fn check_structure(steps: &[ChainStep]) -> Result<Vec<&'static Target>, (usize, 
                 return Err((i, format!("Schritt {} ({}): Die Voreinstellung „{p}“ gibt es nicht.", i + 1, t.title)));
             }
         }
+        if t.merge {
+            return Err((i, format!("Schritt {} ({}): Zusammenführen ist in Abläufen nicht möglich.", i + 1, t.title)));
+        }
         if picks_folder(t, s.preset.as_deref()) {
             return Err((i, format!("Schritt {} ({}): „Ordner wählen“ ist in Abläufen nicht möglich.", i + 1, t.title)));
         }
@@ -152,7 +155,7 @@ pub fn validate(steps: &[ChainStep]) -> Validation {
 /// Targets that may follow `steps` in the builder. Empty `steps` = every target that can start a chain.
 pub fn candidates(steps: &[ChainStep]) -> Vec<&'static Target> {
     let all = &Catalog::builtin().targets;
-    let usable = |t: &&Target| !t.accepts.iter().all(|a| a == "folder") && !picks_folder(t, None);
+    let usable = |t: &&Target| !t.merge && !t.accepts.iter().all(|a| a == "folder") && !picks_folder(t, None);
     if steps.is_empty() {
         return all.iter().filter(usable).collect();
     }
@@ -254,5 +257,6 @@ pub fn build_target(c: &Chain) -> Option<Target> {
         chain: true,
         in_ring: c.in_ring,
         steps: c.steps.clone(),
+        merge: false,
     })
 }

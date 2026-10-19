@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::path::{Path, PathBuf};
 
 /// Next free path in `dir` for `stem` + `ext`, appending " 2", " 3", ... when taken. Never returns an existing path.
@@ -36,4 +37,49 @@ pub fn stem_of(path: &Path) -> String {
         return name[..name.len() - 7].to_string();
     }
     path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or(name)
+}
+
+fn take_digits(it: &mut std::iter::Peekable<std::str::Chars>) -> String {
+    let mut n = String::new();
+    while let Some(c) = it.peek().copied().filter(|c| c.is_ascii_digit()) {
+        n.push(c);
+        it.next();
+    }
+    n
+}
+
+/// Compares names the way people count: case-insensitive, and digit runs by value ("Seite 2" before "Seite 10").
+pub fn natural_cmp(a: &str, b: &str) -> Ordering {
+    let (mut ai, mut bi) = (a.chars().peekable(), b.chars().peekable());
+    loop {
+        match (ai.peek().copied(), bi.peek().copied()) {
+            (None, None) => return a.cmp(b),
+            (None, Some(_)) => return Ordering::Less,
+            (Some(_), None) => return Ordering::Greater,
+            (Some(x), Some(y)) if x.is_ascii_digit() && y.is_ascii_digit() => {
+                let (na, nb) = (take_digits(&mut ai), take_digits(&mut bi));
+                let (ta, tb) = (na.trim_start_matches('0'), nb.trim_start_matches('0'));
+                let o = ta.len().cmp(&tb.len()).then_with(|| ta.cmp(tb));
+                if o != Ordering::Equal {
+                    return o;
+                }
+            }
+            (Some(x), Some(y)) => {
+                let o = x.to_lowercase().cmp(y.to_lowercase());
+                if o != Ordering::Equal {
+                    return o;
+                }
+                ai.next();
+                bi.next();
+            }
+        }
+    }
+}
+
+/// Merge order: natural sort by file name, ties by full path.
+pub fn natural_sorted(paths: &[PathBuf]) -> Vec<PathBuf> {
+    let name = |p: &PathBuf| p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let mut v = paths.to_vec();
+    v.sort_by(|a, b| natural_cmp(&name(a), &name(b)).then_with(|| a.cmp(b)));
+    v
 }

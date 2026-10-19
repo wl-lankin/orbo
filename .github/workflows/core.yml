@@ -22,7 +22,7 @@ jobs:
         run: |
           host=$(rustc -vV | sed -n 's/^host: //p')
           mkdir -p crates/orbo-app/bin
-          for b in ffmpeg ffprobe; do touch "crates/orbo-app/bin/$b-$host"; done
+          for b in ffmpeg ffprobe orbo-cli; do touch "crates/orbo-app/bin/$b-$host"; done
       - name: ffmpeg (Windows)
         if: runner.os == 'Windows'
         run: choco install ffmpeg -y
