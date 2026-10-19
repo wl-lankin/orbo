@@ -484,7 +484,9 @@ mod tests {
 
     #[test]
     fn missing_and_relative_files_are_reported() {
-        let r = tool("orbo_convert", json!({ "paths": ["/nonexistent/x.png"], "target": "webp" }));
+        let dir = tempfile::tempdir().unwrap();
+        let missing = dir.path().join("x.png");
+        let r = tool("orbo_convert", json!({ "paths": [missing], "target": "webp" }));
         assert_eq!(r["isError"], true);
         assert!(text_of(&r).contains("existiert nicht"));
         let r = tool("orbo_analyze", json!({ "path": "relativ/x.png" }));
