@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbo Einstellungen</title>
+<link rel="stylesheet" href="shared.css">
+<link rel="stylesheet" href="settings.css">
+</head>
+<body class="style-classic">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="file" viewBox="0 0 32 40">
+      <path d="M4 1h16l10 10v26a2.5 2.5 0 01-2.5 2.5h-23A2.5 2.5 0 012 37V3.5A2.5 2.5 0 014 1z" fill="currentColor"/>
+      <path d="M20 1v8a2 2 0 002 2h8z" fill="rgba(255,255,255,.5)"/>
+      <rect x="7" y="19" width="16" height="2.4" rx="1.2" fill="rgba(255,255,255,.55)"/>
+      <rect x="7" y="25" width="11" height="2.4" rx="1.2" fill="rgba(255,255,255,.4)"/>
+    </symbol>
+    <symbol id="cursor" viewBox="0 0 20 24"><path d="M2 1.5l15 11.2-6.6 1.2 3.7 7.3-3 1.5-3.7-7.3L2 20z" fill="#fff" stroke="#14162a" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<nav class="side" data-tauri-drag-region>
+  <div class="pill" id="pill"></div>
+  <button class="tab on" data-tab="gen" type="button">
+    <svg viewBox="0 0 20 20"><path d="M3 6h8M15 6h2M3 14h2M9 14h8"/><circle cx="13" cy="6" r="2"/><circle cx="7" cy="14" r="2"/></svg>Allgemein</button>
+  <button class="tab" data-tab="trg" type="button">
+    <svg viewBox="0 0 20 20"><rect x="2.5" y="5" width="15" height="10" rx="2.5"/><path d="M6 8.5h.01M9 8.5h.01M12 8.5h.01M14.5 8.5h.01M7 12h6"/></svg>Auslöser</button>
+  <button class="tab" data-tab="out" type="button">
+    <svg viewBox="0 0 20 20"><path d="M2.5 6.5a2 2 0 012-2h3l1.8 2h6.2a2 2 0 012 2v6a2 2 0 01-2 2h-11a2 2 0 01-2-2z"/></svg>Ausgabe</button>
+  <button class="tab" data-tab="wat" type="button">
+    <svg viewBox="0 0 20 20"><path d="M2.5 6.5a2 2 0 012-2h3l1.8 2h6.2a2 2 0 012 2v6a2 2 0 01-2 2h-11a2 2 0 01-2-2z"/><circle cx="10" cy="11.5" r="2.2"/></svg>Ordner</button>
+  <button class="tab" data-tab="chn" type="button">
+    <svg viewBox="0 0 20 20"><circle cx="7.5" cy="10" r="4.5"/><circle cx="12.5" cy="10" r="4.5"/></svg>Abläufe</button>
+  <button class="tab" data-tab="ai" type="button">
+    <svg viewBox="0 0 20 20"><rect x="5" y="5" width="10" height="10" rx="2.2"/><path d="M8 2.5v2.5M12 2.5v2.5M8 15v2.5M12 15v2.5M2.5 8h2.5M2.5 12h2.5M15 8h2.5M15 12h2.5"/><path d="M10 7.8l.8 1.4 1.4.8-1.4.8-.8 1.4-.8-1.4-1.4-.8 1.4-.8z"/></svg>KI (lokal)</button>
+  <button class="tab" data-tab="about" type="button">
+    <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><path d="M10 9v5M10 6.2h.01"/></svg>Über</button>
+</nav>
+
+<main class="content">
+  <!-- Allgemein -->
+  <section class="pane on" data-pane="gen">
+    <figure class="hero" data-slot="allgemein">
+      <svg viewBox="0 0 474 124" role="img" aria-label="Der Orbo-Ring mit schwebenden Dateien">
+        <g class="ringg"><g class="spin">
+          <circle class="seg c-image" cx="237" cy="62" r="34" style="stroke-dasharray:36 177.6;stroke-dashoffset:0"/>
+          <circle class="seg c-video" cx="237" cy="62" r="34" style="stroke-dasharray:36 177.6;stroke-dashoffset:-42.7"/>
+          <circle class="seg c-audio" cx="237" cy="62" r="34" style="stroke-dasharray:36 177.6;stroke-dashoffset:-85.4"/>
+          <circle class="seg c-data" cx="237" cy="62" r="34" style="stroke-dasharray:36 177.6;stroke-dashoffset:-128.1"/>
+          <circle class="seg c-archive" cx="237" cy="62" r="34" style="stroke-dasharray:36 177.6;stroke-dashoffset:-170.8"/>
+        </g>
+        <circle class="core" cx="237" cy="62" r="17"/><circle class="coredot" cx="237" cy="62" r="5"/></g>
+        <use href="#file" class="fl fl1 c-image-t" x="52" y="42" width="22" height="28"/>
+        <use href="#file" class="fl fl2 c-video-t" x="400" y="46" width="20" height="25"/>
+        <use href="#file" class="fl fl3 c-audio-t" x="72" y="78" width="16" height="20"/>
+        <use href="#file" class="fl fl4 c-data-t" x="386" y="14" width="17" height="21"/>
+      </svg>
+      <img alt="" src="assets/illustrations/allgemein.png" onload="this.parentNode.classList.add('has-img')" onerror="this.remove()">
+    </figure>
+
+    <h3>Darstellung</h3>
+    <div class="card">
+      <div class="themes" id="themes">
+        <button class="theme" data-v="classic" type="button" aria-label="Klassisch">
+          <span class="thumb">
+            <svg viewBox="0 0 160 92"><defs><linearGradient id="wpA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b5fa8"/><stop offset="1" stop-color="#b0597d"/></linearGradient></defs>
+              <rect width="160" height="92" fill="url(#wpA)"/>
+              <circle cx="80" cy="46" r="36" fill="#0e1020" fill-opacity=".82" stroke="rgba(255,255,255,.14)"/>
+              <g><circle cx="80" cy="22" r="6.5" fill="#b197fc"/><circle cx="103" cy="31" r="6.5" fill="#ff8094"/><circle cx="105" cy="58" r="6.5" fill="#5be08f"/><circle cx="80" cy="70" r="6.5" fill="#ffd84d"/><circle cx="55" cy="58" r="6.5" fill="#ffb878"/><circle cx="57" cy="31" r="6.5" fill="#74b0ff"/></g>
+              <circle cx="80" cy="46" r="9" fill="rgba(255,255,255,.14)"/></svg>
+          </span>Klassisch</button>
+        <button class="theme" data-v="glass" type="button" aria-label="Glas">
+          <span class="thumb">
+            <svg viewBox="0 0 160 92"><rect width="160" height="92" fill="url(#wpA)"/>
+              <defs><linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity=".14"/></linearGradient></defs>
+              <circle cx="80" cy="46" r="36" fill="url(#gl)" stroke="rgba(255,255,255,.7)"/>
+              <path d="M52 34a32 32 0 0156 0" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.4" stroke-linecap="round"/>
+              <g fill="rgba(255,255,255,.88)"><circle cx="80" cy="22" r="6.5"/><circle cx="103" cy="31" r="6.5"/><circle cx="105" cy="58" r="6.5"/><circle cx="80" cy="70" r="6.5"/><circle cx="55" cy="58" r="6.5"/><circle cx="57" cy="31" r="6.5"/></g>
+              <circle cx="80" cy="46" r="9" fill="rgba(255,255,255,.4)"/></svg>
+          </span>Glas</button>
+      </div>
+      <label class="row"><span class="lbl">Bei Anmeldung starten<small>Orbo startet automatisch bei der Anmeldung am Mac</small></span><input class="tg" type="checkbox" id="autostart"></label>
+      <label class="row"><span class="lbl">Klick-Ton<small>Leises Klicken bei der Auswahl im Ring</small></span><input class="tg" type="checkbox" id="sound"></label>
+      <label class="row"><span class="lbl">Bewegung reduzieren<small>Weniger Animationen im Ring und in den Fenstern</small></span><input class="tg" type="checkbox" id="reduce"></label>
+      <div class="row"><span class="lbl">Einführung<small>Einführung in Orbo erneut anzeigen</small></span><button class="btn" id="intro" type="button">Einführung erneut anzeigen</button></div>
+      <div class="row" id="ctxRow" hidden><span class="lbl"><span id="ctxTitle">Finder-Rechtsklick</span><small id="ctxState">Eintrag „Mit Orbo umwandeln“ im Kontextmenü</small></span><span class="ctxbtns"><button class="btn" id="ctxInstall" type="button">Finder-Rechtsklick einrichten</button><button class="btn" id="ctxRemove" type="button" hidden>Entfernen</button></span></div>
+    </div>
+  </section>
+
+  <!-- Auslöser -->
+  <section class="pane" data-pane="trg">
+    <figure class="hero" data-slot="ausloeser">
+      <svg viewBox="0 0 474 124" role="img" aria-label="Taste halten oder Datei schütteln, dann erscheint der Ring">
+        <g class="keyg">
+          <rect class="keyglow" x="84" y="30" width="64" height="64" rx="16"/>
+          <rect class="keycap" x="90" y="34" width="52" height="52" rx="12"/>
+          <text x="116" y="69" text-anchor="middle" class="keytxt">⌥</text>
+        </g>
+        <g class="shake">
+          <path class="zig" d="M196 52l-8 5 8 5-8 5"/><path class="zig" d="M284 52l8 5-8 5 8 5"/>
+          <use href="#file" class="c-image-t" x="212" y="38" width="46" height="58"/>
+          <use href="#cursor" x="244" y="76" width="18" height="22"/>
+        </g>
+        <g class="mini">
+          <circle cx="388" cy="62" r="30" class="miniring"/>
+          <circle cx="388" cy="39" r="5.5" fill="var(--image)"/><circle cx="408" cy="50" r="5.5" fill="var(--video)"/><circle cx="408" cy="74" r="5.5" fill="var(--audio)"/><circle cx="388" cy="85" r="5.5" fill="var(--data)"/><circle cx="368" cy="74" r="5.5" fill="var(--archive)"/><circle cx="368" cy="50" r="5.5" fill="var(--document)"/>
+        </g>
+      </svg>
+      <img alt="" src="assets/illustrations/ausloeser.png" onload="this.parentNode.classList.add('has-img')" onerror="this.remove()">
+    </figure>
+
+    <h3>Taste</h3>
+    <div class="card">
+      <div class="keys" id="keys">
+        <button type="button" class="key" data-v="option"><b>⌥</b><span>Option</span></button>
+        <button type="button" class="key" data-v="control"><b>⌃</b><span>Control</span></button>
+        <button type="button" class="key" data-v="shift"><b>⇧</b><span>Shift</span></button>
+        <button type="button" class="key" data-v="command"><b>⌘</b><span>Command</span></button>
+        <button type="button" class="key" data-v="fn"><b>fn</b><span>Funktion</span></button>
+      </div>
+      <div class="note">Halte die Taste gedrückt, während du eine Datei ziehst. Der Ring erscheint am Mauszeiger.</div>
+    </div>
+    <h3>Weitere Auslöser</h3>
+    <div class="card">
+      <label class="row"><span class="lbl">Schütteln<small>Datei beim Ziehen schnell hin und her bewegen</small></span><input class="tg" type="checkbox" id="shake"></label>
+      <label class="row"><span class="lbl"><span>Notch-Portal</span><small>Datei zur Kamera-Notch ziehen</small></span><input class="tg" type="checkbox" id="notch"></label>
+    </div>
+  </section>
+
+  <!-- Ausgabe -->
+  <section class="pane" data-pane="out">
+    <figure class="hero" data-slot="ausgabe">
+      <svg viewBox="0 0 474 124" role="img" aria-label="Das Original bleibt, die neue Datei erscheint daneben">
+        <g class="orig">
+          <use href="#file" class="c-data-t" x="150" y="30" width="52" height="65"/>
+          <circle cx="198" cy="34" r="11" fill="var(--ok)"/><path d="M192.5 34l4 4 6-7" fill="none" stroke="#0d2a18" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="157" y="76" width="30" height="13" rx="4" fill="rgba(0,0,0,.28)"/><text x="172" y="86" text-anchor="middle" class="ext">PNG</text>
+        </g>
+        <g class="plus"><path d="M225 62h14M232 55v14"/></g>
+        <g class="neu">
+          <use href="#file" class="c-image-t" x="262" y="30" width="52" height="65"/>
+          <rect x="269" y="76" width="30" height="13" rx="4" fill="rgba(0,0,0,.28)"/><text x="284" y="86" text-anchor="middle" class="ext">JPG</text>
+          <path d="M310 22l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff" class="spark"/>
+        </g>
+      </svg>
+      <img alt="" src="assets/illustrations/ausgabe.png" onload="this.parentNode.classList.add('has-img')" onerror="this.remove()">
+    </figure>
+
+    <h3>Speicherort</h3>
+    <div class="card">
+      <div class="choices" id="mode">
+        <button type="button" class="choice" data-v="beside">
+          <svg viewBox="0 0 40 28"><rect x="3" y="5" width="14" height="18" rx="3"/><rect x="23" y="5" width="14" height="18" rx="3" class="n"/></svg>
+          <span><b>Neben dem Original</b><small>Gleicher Ordner</small></span></button>
+        <button type="button" class="choice" data-v="folder">
+          <svg viewBox="0 0 40 28"><path d="M4 8a3 3 0 013-3h7l3 3h13a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3z"/></svg>
+          <span><b>Eigener Ordner</b><small>Alle Dateien an einem Ort</small></span></button>
+      </div>
+      <div class="row folder" id="folderRow">
+        <input class="txt" type="text" id="folder" placeholder="/Users/du/Documents/Orbo" spellcheck="false">
+        <button class="btn" type="button" id="pick">Auswählen</button>
+      </div>
+    </div>
+    <h3>Dateiname</h3>
+    <div class="card">
+      <div class="row"><span class="lbl">Namensschema<small id="nameEx"></small></span>
+        <span class="segc" id="naming"><button type="button" data-v="plain">Name.jpg</button><button type="button" data-v="suffix">Name (JPG).jpg</button></span></div>
+      <div class="row safe"><svg viewBox="0 0 20 20"><path d="M10 2.5l6 2.2v4.6c0 4-2.5 6.8-6 8.2-3.5-1.4-6-4.2-6-8.2V4.7z"/><path d="M7.2 10l2 2 3.6-4"/></svg><span class="lbl">Original bleibt immer erhalten<small>Orbo überschreibt nie eine vorhandene Datei.</small></span></div>
+    </div>
+  </section>
+
+  <!-- Überwachte Ordner -->
+  <section class="pane" data-pane="wat">
+    <h3>Überwachte Ordner</h3>
+    <div class="card" id="wEmpty">
+      <div class="row wempty">
+        <svg viewBox="0 0 20 20"><path d="M2.5 6.5a2 2 0 012-2h3l1.8 2h6.2a2 2 0 012 2v6a2 2 0 01-2 2h-11a2 2 0 01-2-2z"/><circle cx="10" cy="11.5" r="2.2"/></svg>
+        <span class="lbl">Noch kein Ordner überwacht<small>Orbo wandelt neue Dateien in einem Ordner automatisch um, sobald sie ankommen. Zum Beispiel: Alles, was in Bildschirmfotos landet, wird zu WEBP. Das Original bleibt erhalten.</small></span>
+      </div>
+    </div>
+    <div class="card" id="wList" hidden></div>
+    <div class="card" id="wPick" hidden>
+      <div class="row wpickhead"><span class="lbl"><span id="wPickName"></span><small id="wPickPath"></small></span></div>
+      <div class="row wsearch"><input class="txt" type="text" id="wSearch" placeholder="Ziel suchen, zum Beispiel WEBP" spellcheck="false"></div>
+      <div class="wtargets" id="wTargets"></div>
+      <div class="row" id="wPresetRow" hidden><span class="lbl">Vorlage<small>Gilt für jede umgewandelte Datei</small></span><select class="sel" id="wPreset"></select></div>
+      <label class="row"><span class="lbl">Unterordner einbeziehen<small>Auch neue Dateien in Ordnern darin umwandeln</small></span><input class="tg" type="checkbox" id="wSub"></label>
+      <div class="row wactions"><button class="btn" type="button" id="wCancel">Abbrechen</button><button class="btn primary" type="button" id="wConfirm" disabled>Ordner überwachen</button></div>
+    </div>
+    <div class="wbar" id="wBar"><button class="btn" type="button" id="wAdd">Ordner hinzufügen</button></div>
+    <div class="card" id="wMacNote" hidden>
+      <div class="note">Für Ordner wie Schreibtisch, Dokumente und Downloads braucht Orbo die Ordnerfreigabe, nach der die Einführung fragt. Zu den Systemeinstellungen: <a href="#" id="wPriv">Dateien und Ordner</a>.</div>
+    </div>
+    <div class="card"><div class="note">Orbo wartet, bis eine Datei vollständig angekommen ist, und lässt angefangene Downloads, versteckte Dateien und eigene Ergebnisse aus. Während Orbo pausiert ist, werden keine Dateien umgewandelt. Speicherort und Dateiname richten sich nach den Einstellungen unter Ausgabe.</div></div>
+  </section>
+
+  <!-- Abläufe -->
+  <section class="pane" data-pane="chn">
+    <h3>Abläufe</h3>
+    <div class="card" id="cEmpty">
+      <div class="row wempty">
+        <svg viewBox="0 0 20 20"><circle cx="7.5" cy="10" r="4.5"/><circle cx="12.5" cy="10" r="4.5"/></svg>
+        <span class="lbl">Noch kein Ablauf angelegt<small>Ein Ablauf verkettet mehrere Umwandlungen zu einer einzigen. Orbo führt die Schritte nacheinander aus und gibt nur das Endergebnis aus. Ein Ablauf erscheint im Ring unter „Mehr“, wenn er zur Datei passt.</small></span>
+      </div>
+      <div class="row ctempl" id="cTempl"></div>
+    </div>
+    <div class="card" id="cList" hidden></div>
+    <div class="wbar" id="cBar"><button class="btn" type="button" id="cNew">Neuer Ablauf</button></div>
+    <div class="card" id="cEdit" hidden>
+      <div class="row"><span class="lbl">Name</span><input class="txt" type="text" id="cName" maxlength="40" placeholder="zum Beispiel Bild fürs Web" spellcheck="false"></div>
+      <div id="cSteps"></div>
+      <div class="row cerr" id="cErr" hidden></div>
+      <div id="cPicker" hidden>
+        <div class="row wsearch"><input class="txt" type="text" id="cSearch" placeholder="Schritt suchen, zum Beispiel WEBP" spellcheck="false"></div>
+        <div class="wtargets" id="cTargets"></div>
+      </div>
+      <div class="row"><span class="lbl">Schritt hinzufügen<small id="cAddHint">Zeigt nur Ziele, die zum Ergebnis des letzten Schritts passen</small></span><button class="btn" type="button" id="cAdd">Schritt hinzufügen</button></div>
+      <label class="row"><span class="lbl">Im Ring anbieten<small>Nimmt einen freien Platz im Ring ein, sofern der Ablauf zur Datei passt</small></span><input class="tg" type="checkbox" id="cRing"></label>
+      <div class="row wactions"><button class="btn" type="button" id="cCancel">Abbrechen</button><button class="btn primary" type="button" id="cSave" disabled>Speichern</button></div>
+    </div>
+    <div class="card"><div class="note">Steht ein Schritt, der einen Ordner erzeugt (zum Beispiel PDF-Seiten als Bilder), muss er am Ende des Ablaufs stehen. KI-Schritte sind erlaubt, brauchen aber etwas Zeit. Zwischenergebnisse werden nach dem Lauf gelöscht. Abläufe lassen sich auch als Ziel für überwachte Ordner wählen, solange sie keine KI-Schritte enthalten.</div></div>
+  </section>
+
+  <!-- KI -->
+  <section class="pane" data-pane="ai">
+    <figure class="hero" data-slot="ki">
+      <svg viewBox="0 0 474 124" role="img" aria-label="Die KI läuft auf deinem Rechner, die Daten bleiben dort">
+        <rect class="bound" x="127" y="13" width="220" height="100" rx="26"/>
+        <g class="lap">
+          <rect x="187" y="30" width="100" height="62" rx="7" class="screen"/>
+          <path d="M175 96h124l-6 7H181z" class="base"/>
+          <g class="chipg"><rect x="221" y="46" width="32" height="32" rx="7" class="chip"/>
+            <path d="M228 42v4M237 42v4M246 42v4M228 78v4M237 78v4M246 78v4M217 54h4M217 62h4M217 70h4M253 54h4M253 62h4M253 70h4" class="pins"/>
+            <path d="M237 54l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff" class="spark"/></g>
+        </g>
+        <g class="lockb"><circle cx="237" cy="13" r="11"/><rect x="231.5" y="12" width="11" height="8.5" rx="2.2" fill="#14162a"/><path d="M233.8 12V9.8a3.2 3.2 0 016.4 0V12" fill="none" stroke="#14162a" stroke-width="1.8"/></g>
+        <circle r="3.6" fill="var(--audio)"><animateMotion dur="7s" repeatCount="indefinite" path="M153 13h168a26 26 0 0126 26v35a26 26 0 01-26 26H153a26 26 0 01-26-26V39a26 26 0 0126-26z"/></circle>
+        <circle r="3.6" fill="var(--image)"><animateMotion dur="7s" begin="-3.5s" repeatCount="indefinite" path="M153 13h168a26 26 0 0126 26v35a26 26 0 01-26 26H153a26 26 0 01-26-26V39a26 26 0 0126-26z"/></circle>
+        <g class="cloud"><path d="M392 80a13 13 0 01-2-25.8 17 17 0 0132.6 2.6A11.5 11.5 0 01421 80z"/><path d="M386 94l46-54" class="slash"/></g>
+      </svg>
+      <img alt="" src="assets/illustrations/ki.png" onload="this.parentNode.classList.add('has-img')" onerror="this.remove()">
+    </figure>
+
+    <div class="card">
+      <label class="row"><span class="lbl">Ollama verwenden<small>Optional. Orbo funktioniert auch ohne KI.</small></span><input class="tg" type="checkbox" id="ollama"></label>
+    </div>
+    <div class="group" id="aiBody">
+      <h3>Verbindung</h3>
+      <div class="card">
+        <div class="row"><span class="lbl">Server</span><input class="txt" type="text" id="url" spellcheck="false" placeholder="http://localhost:11434"></div>
+        <div class="row note" id="lanNote" hidden><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5"/><path d="M10 9v4.5M10 6.6h.01"/></svg><span class="lbl">Server in deinem Netz<small>Dateiinhalte gehen für KI-Aktionen an diesen Rechner, aber nicht ins Internet.</small></span></div>
+        <div class="row warn" id="warn" hidden><svg viewBox="0 0 20 20"><path d="M10 3l8 14H2z"/><path d="M10 8.5v4M10 14.7h.01"/></svg><span class="lbl">Dieser Server liegt nicht in deinem Netz<small>Dateiinhalte würden über das Internet gehen.</small></span></div>
+        <label class="row" id="remoteRow" hidden><span class="lbl">Server im Internet erlauben<small>Ohne diese Option verweigert Orbo die KI-Aktionen.</small></span><input class="tg" type="checkbox" id="remote"></label>
+        <div class="row"><span class="status" id="status"><i></i><span id="statusTxt">Nicht geprüft</span></span><button class="btn" type="button" id="test">Verbindung testen</button></div>
+        <div class="row"><span class="lbl">Modell</span><select class="sel" id="model" disabled><option value="">Nicht verbunden</option></select></div>
+      </div>
+      <h3>Aktionen</h3>
+      <div class="card" id="actions">
+        <label class="row"><span class="lbl">Dateien sinnvoll umbenennen<small>Kopie mit beschreibendem Namen</small></span><input class="tg" type="checkbox" data-a="rename"></label>
+        <label class="row"><span class="lbl">Bildbeschreibung und Alt-Text</span><input class="tg" type="checkbox" data-a="alt_text"></label>
+        <label class="row"><span class="lbl">Zusammenfassung<small>PDF, Text, Transkript</small></span><input class="tg" type="checkbox" data-a="summary"></label>
+        <label class="row"><span class="lbl">Übersetzen<small>Text und Untertitel</small></span><input class="tg" type="checkbox" data-a="translate"></label>
+        <label class="row"><span class="lbl">Befehle als Freitext<small>Beispiel: „als 800 px WEBP“</small></span><input class="tg" type="checkbox" data-a="command"></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- Über -->
+  <section class="pane" data-pane="about">
+    <figure class="hero" data-slot="ueber">
+      <svg viewBox="0 0 474 124" role="img" aria-label="Orbo-Logo mit kreisenden Satelliten">
+        <ellipse class="orbit o1" cx="237" cy="62" rx="108" ry="30" transform="rotate(-14 237 62)"/>
+        <ellipse class="orbit o2" cx="237" cy="62" rx="84" ry="22" transform="rotate(16 237 62)"/>
+        <g>
+          <circle class="seg c-image" cx="237" cy="62" r="30" style="stroke-dasharray:31 157.5;stroke-dashoffset:0"/>
+          <circle class="seg c-video" cx="237" cy="62" r="30" style="stroke-dasharray:31 157.5;stroke-dashoffset:-37.7"/>
+          <circle class="seg c-audio" cx="237" cy="62" r="30" style="stroke-dasharray:31 157.5;stroke-dashoffset:-75.4"/>
+          <circle class="seg c-data" cx="237" cy="62" r="30" style="stroke-dasharray:31 157.5;stroke-dashoffset:-113.1"/>
+          <circle class="seg c-archive" cx="237" cy="62" r="30" style="stroke-dasharray:31 157.5;stroke-dashoffset:-150.8"/>
+        </g>
+        <circle class="core" cx="237" cy="62" r="14"/><circle class="coredot" cx="237" cy="62" r="4.5"/>
+        <circle r="4.5" fill="var(--video)"><animateMotion dur="9s" repeatCount="indefinite" rotate="auto" path="M129 62a108 30 0 10216 0a108 30 0 10-216 0" /></circle>
+        <circle r="3.8" fill="var(--audio)"><animateMotion dur="6s" repeatCount="indefinite" path="M153 62a84 22 0 10168 0a84 22 0 10-168 0"/></circle>
+      </svg>
+      <img alt="" src="assets/illustrations/ueber.png" onload="this.parentNode.classList.add('has-img')" onerror="this.remove()">
+    </figure>
+    <div class="about-head"><span class="wordmark" aria-label="Orbo">orb<i class="ring-o"></i></span><span id="version">Version 0.1.0</span></div>
+
+    <h3>Updates</h3>
+    <div class="card">
+      <label class="row"><span class="lbl">Automatisch aktualisieren<small>Orbo lädt neue Versionen im Hintergrund und installiert sie, sobald gerade nichts umgewandelt wird.</small></span><input class="tg" type="checkbox" id="autoupdate"></label>
+      <div class="row"><span class="lbl" id="updText">Noch nicht geprüft<small id="updSub"></small></span><button class="btn" type="button" id="updInstall" hidden>Jetzt installieren</button><button class="btn" type="button" id="updCheck">Jetzt prüfen</button></div>
+    </div>
+
+    <h3>Entwickelt von</h3>
+    <div class="card">
+      <a class="row author" href="https://wolfgang-linz.de" data-url="https://wolfgang-linz.de">
+        <svg viewBox="0 0 20 20"><circle cx="10" cy="7" r="3.2"/><path d="M3.8 17c.9-3.2 3.3-4.8 6.2-4.8s5.3 1.6 6.2 4.8"/></svg>
+        <span class="lbl">Wolfgang Linz<small>wolfgang-linz.de</small></span>
+        <svg class="ext" viewBox="0 0 20 20"><path d="M8 4h8v8M16 4l-9 9M13 11v5H4V7h5"/></svg>
+      </a>
+    </div>
+
+    <h3>Unterstützung</h3>
+    <div class="card">
+      <div class="row">
+        <span class="lbl">Orbo ist kostenlos<small>Ohne Werbung und ohne Einschränkungen. Wenn dir Orbo hilft, kannst du die Entwicklung freiwillig unterstützen.</small></span>
+        <button class="btn" type="button" id="support">Orbo unterstützen</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row safe"><svg viewBox="0 0 20 20"><rect x="4" y="9" width="12" height="8.5" rx="2.4"/><path d="M6.8 9V6.6a3.2 3.2 0 016.4 0V9"/></svg><span class="lbl">Verarbeitung ausschließlich lokal<small>Deine Dateien verlassen diesen Rechner nicht. Es gibt weder Konten noch Cloud-Dienste.</small></span></div>
+    </div>
+    <h3>Lizenzen</h3>
+    <div class="card"><div class="note">Orbo verwendet Open-Source-Software, darunter FFmpeg (LGPL), Tauri und die Schrift Nunito (SIL Open Font License). Es gelten die jeweiligen Lizenzen der Komponenten.</div></div>
+  </section>
+</main>
+
+<script src="dev-mock-dialogs.js"></script>
+<script src="settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+ring:
+  format:
+    epub: [book_pdf, book_txt, book_md, book_html]
+    mobi: [epub, book_pdf, book_txt, book_md, book_html]
+    azw3: [epub, book_pdf, book_txt, book_md, book_html]
+    fb2: [epub, book_pdf, book_txt, book_md, book_html]
+    cbz: [cbz_pdf]
+    ass: [sub_srt, sub_vtt, sub_sbv]
+    sbv: [sub_srt, sub_vtt, sub_ass]
+    srt: [vtt, sub_ass, sub_sbv]
+    vtt: [srt, sub_ass, sub_sbv]
+  kind: {}
+rules:
+  - why: Text, Markdown, HTML und Word lassen sich als E-Book speichern
+    when: { format: [txt, md, html, docx] }
+    add: [epub]

@@ -1,0 +1,6 @@
+ring:
+  format:
+    dxf: [cad_svg, cad_pdf, cad_png, cad_dxf_clean]
+    dwg: [dwg_dxf, dwg_svg, dwg_pdf, dwg_png]
+  kind: {}
+rules: []

@@ -1,0 +1,9 @@
+# AI targets never enter ring.format, so they cannot push core targets out. They live under "Mehr ..."
+# (group KI); `fill` only uses ring slots that are still free.
+ring:
+  format: {}
+  kind: {}
+rules:
+  - why: KI-Umbenennen füllt einen freien Ringplatz bei Bildern und Dokumenten
+    when: { kind: [image, document] }
+    fill: [ai_rename]

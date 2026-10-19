@@ -1,0 +1,13 @@
+core/target
+dist/
+vendor/prefix
+vendor/src
+spikes/*/target
+spikes/*/build
+spikes/windows-drag/dist
+core/crates/orbo-app/bin/
+.DS_Store
+*.key
+*.pass
+node_modules
+core/crates/target

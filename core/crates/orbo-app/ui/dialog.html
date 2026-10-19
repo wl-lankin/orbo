@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbo Optionen</title>
+<link rel="stylesheet" href="shared.css">
+<link rel="stylesheet" href="dialog.css">
+</head>
+<body class="style-classic">
+<header class="strip" data-tauri-drag-region>
+  <div class="strip-title" id="stripTitle"></div>
+</header>
+<section class="fileline" id="fileline" hidden>
+  <span class="fdot" id="fdot"></span>
+  <span class="fname" id="fname"></span>
+  <span class="fmeta" id="fmeta"></span>
+</section>
+<main class="stage" id="stage"></main>
+<section class="panel" id="panel"></section>
+<footer class="foot">
+  <button class="btn ghost" id="reset" type="button">Zurücksetzen</button>
+  <span class="spacer"></span>
+  <span class="err" id="err" role="alert"></span>
+  <button class="btn" id="cancel" type="button">Abbrechen</button>
+  <button class="btn primary" id="go" type="button"><span id="goLabel">Umwandeln</span><kbd>↩</kbd></button>
+</footer>
+<script src="dev-mock-dialogs.js"></script>
+<script src="dialog.js"></script>
+</body>
+</html>

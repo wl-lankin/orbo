@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = ["crates/orbo-core", "crates/orbo-cli", "crates/orbo-app", "crates/orbo-license"]
+
+[workspace.package]
+edition = "2021"
+version = "1.0.0"
+license = "MIT"
+
+[profile.release]
+opt-level = 3
+# Stripping proc-macro dylibs with the macOS 27 toolchain corrupts them ("mis-aligned LINKEDIT").
+strip = "none"
+
+# Image codecs are unusably slow without optimization, also in tests.
+[profile.dev.package."*"]
+opt-level = 3

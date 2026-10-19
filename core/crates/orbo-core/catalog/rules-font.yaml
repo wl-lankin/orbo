@@ -1,0 +1,9 @@
+ring:
+  format:
+    ttf: [font_woff2, font_woff, font_specimen]
+    otf: [font_woff2, font_woff, font_specimen]
+    woff: [font_ttf, font_otf, font_woff2, font_specimen]
+    woff2: [font_ttf, font_otf, font_woff, font_specimen]
+  kind:
+    font: [font_woff2, font_woff, font_ttf, font_otf, font_specimen]
+rules: []

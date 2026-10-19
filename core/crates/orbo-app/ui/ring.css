@@ -1,0 +1,99 @@
+html, body { width: 520px; height: 520px; overflow: hidden; background: transparent; }
+#stage { position: absolute; inset: 0; transform-origin: 50% 50%; animation: stageIn .32s var(--ease-spring) both; }
+#stage.closing { animation: none; transition: transform .26s var(--ease-in), opacity .22s; transform: scale(.3); opacity: 0; }
+#stage.dismiss { animation: none; transition: transform .2s var(--ease-out), opacity .2s; transform: scale(1.1); opacity: 0; }
+#svg { position: absolute; inset: 0; overflow: visible; display: block; }
+@keyframes stageIn { from { transform: scale(.82); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.style-classic {
+  --sec-fill: rgba(18, 20, 36, .50); --sec-stroke: rgba(255, 255, 255, .13);
+  --lens-fill: rgba(10, 12, 24, .66); --lens-stroke: rgba(255, 255, 255, .16);
+  --tint-op: .36; --pre-fill: rgba(18, 20, 36, .78);
+  --spec-op: 0; --sheen-op: 1;
+}
+.style-glass {
+  --sec-fill: rgba(255, 255, 255, .11); --sec-stroke: rgba(255, 255, 255, .0);
+  --lens-fill: rgba(255, 255, 255, .12); --lens-stroke: rgba(255, 255, 255, .0);
+  --tint-op: .46; --pre-fill: rgba(255, 255, 255, .18);
+  --spec-op: 1; --sheen-op: .6;
+}
+.style-classic .sec, .style-classic .pre, .style-classic #lens { --kz: var(--k); }
+.style-glass .sec, .style-glass .pre, .style-glass #lens { --kz: color-mix(in srgb, var(--k) 38%, #fff); }
+
+.sec { transform-box: fill-box; transform-origin: center;
+  animation: secIn .46s var(--ease-spring) var(--d) both; }
+@keyframes secIn {
+  from { transform: translate(calc(var(--ux) * -46px), calc(var(--uy) * -46px)) scale(.55); opacity: 0; }
+  60% { opacity: 1; }
+  to { transform: none; opacity: 1; }
+}
+.lift { transform-box: fill-box; transform-origin: center;
+  transition: transform .26s var(--ease-spring); }
+.sec.hot .lift { transform: translate(calc(var(--ux) * 9px), calc(var(--uy) * 9px)) scale(1.04); }
+.sec.picked .lift { animation: pick .32s var(--ease-spring) both; }
+@keyframes pick { 50% { transform: translate(calc(var(--ux) * 14px), calc(var(--uy) * 14px)) scale(1.1); } }
+#stage.committed .sec:not(.picked) { transition: opacity .18s; opacity: .25; }
+
+.sec .gl { fill: var(--k); opacity: 0; transition: opacity .2s; }
+.sec.hot .gl { opacity: .75; }
+.sec .body { fill: var(--sec-fill); stroke: var(--sec-stroke); stroke-width: 1; }
+.sec .tint { fill: var(--k); opacity: 0; transition: opacity .16s; }
+.sec.hot .tint { opacity: var(--tint-op); }
+.sec .sheen { opacity: var(--sheen-op); }
+.sec .spec { fill: none; stroke-width: 1.2; opacity: var(--spec-op); }
+.sec .edge { fill: none; stroke: transparent; stroke-width: 1; }
+.sec.intent .edge, .sec.ai .edge { stroke: rgba(255, 255, 255, .34); stroke-dasharray: 5 4; }
+.sec.hot .edge { stroke: var(--kz); stroke-dasharray: none; stroke-width: 1.4; }
+.sec .rim { fill: none; stroke: var(--k); stroke-width: 3; stroke-linecap: round; opacity: 0; transition: opacity .16s; }
+.sec.hot .rim { opacity: 1; }
+.sec .dflt { fill: var(--k); }
+.sec .ic { stroke: var(--kz); }
+
+text { fill: var(--txt); text-anchor: middle; dominant-baseline: central; font-family: var(--font-rounded); font-variant-numeric: tabular-nums; }
+.n { font-size: 15px; font-weight: 700; letter-spacing: .1px; }
+.s { font-size: 10.5px; fill: var(--mut); transition: fill .16s; }
+.z { font-size: 10.5px; font-weight: 650; fill: var(--kz); font-variant-numeric: tabular-nums; }
+.sec.hot .s { fill: var(--txt); }
+
+.pre { transform-box: fill-box; transform-origin: center; animation: preIn .3s var(--ease-spring) var(--d) both; }
+@keyframes preIn { from { transform: scale(.78); opacity: 0; } to { transform: none; opacity: 1; } }
+.pre .pgl { fill: var(--k); opacity: 0; transition: opacity .16s; }
+.pre.hot .pgl { opacity: .7; }
+.pre .pb { fill: var(--pre-fill); stroke: color-mix(in srgb, var(--k) 55%, transparent); stroke-width: 1; }
+.pre .pt { fill: var(--k); opacity: 0; transition: opacity .14s; }
+.pre.hot .pt { opacity: .5; }
+.pre text { font-size: 11px; font-weight: 650; }
+.pre.hot text { fill: #fff; }
+
+.lens-bg { fill: var(--lens-fill); }
+.lens-spec { fill: none; stroke-width: 1.2; opacity: var(--spec-op); }
+.lens-edge { fill: none; stroke: var(--lens-stroke); stroke-width: 1; transition: stroke .16s; }
+.lens-glow { fill: var(--k); opacity: 0; transition: opacity .2s; }
+.lens.hot .lens-glow { opacity: .5; }
+.lens.hot .lens-edge { stroke: var(--kz); stroke-width: 2; }
+
+#needle { transition: transform .42s var(--ease-spring), opacity .15s; opacity: 0; transform-origin: 0 0; }
+#needle.on { opacity: 1; }
+#needlePath { fill: none; stroke: var(--kz); stroke-width: 3; stroke-linecap: round; }
+
+.ll { transform-box: fill-box; transform-origin: center; }
+.ll.swap { animation: llIn .18s var(--ease-out) both; }
+@keyframes llIn { from { opacity: .2; transform: scale(.94); } to { opacity: 1; transform: none; } }
+.l-name { font-size: 13px; font-weight: 700; }
+.l-big { font-size: 21px; font-weight: 800; fill: var(--kz); letter-spacing: -.2px; }
+.l-m { font-size: 10px; fill: var(--mut); font-variant-numeric: tabular-nums; }
+.l-g { font-size: 10.5px; font-weight: 650; fill: var(--kz); }
+.l-ok { fill: var(--ok); font-size: 12px; font-weight: 750; }
+.l-up { fill: var(--warn); font-size: 12px; font-weight: 750; }
+
+.reduce-motion .sec, .reduce-motion .pre { animation-delay: 0s !important; }
+@media (prefers-reduced-motion: reduce) { .sec, .pre { animation-delay: 0s !important; } }
+
+.ic { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.style-glass text { paint-order: stroke; stroke: rgba(10, 14, 50, .2); stroke-width: 1.6px; stroke-linejoin: round; }
+.style-glass .sec.hot .z, .style-glass .sec.hot .s { fill: #fff; }
+
+
+.l-warn { font-size: 9.5px; font-weight: 650; fill: var(--warn); }
+.pre.more text { font-size: 15px; font-weight: 800; letter-spacing: 1px; }
+

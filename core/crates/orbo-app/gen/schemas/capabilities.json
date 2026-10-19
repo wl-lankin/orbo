@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"Alle Orbit-Fenster","local":true,"windows":["ring","toast","dialog","settings","onboarding","notch"],"permissions":["core:default","core:window:allow-start-dragging","core:window:allow-close","core:webview:default","dialog:default","deep-link:default"]}}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>LSUIElement</key>
+  <true/>
+  <key>NSDesktopFolderUsageDescription</key>
+  <string>Orbo legt umgewandelte Dateien neben dem Original ab.</string>
+  <key>NSDocumentsFolderUsageDescription</key>
+  <string>Orbo legt umgewandelte Dateien neben dem Original ab.</string>
+  <key>NSDownloadsFolderUsageDescription</key>
+  <string>Orbo legt umgewandelte Dateien neben dem Original ab.</string>
+</dict>
+</plist>

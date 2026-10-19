@@ -1,0 +1,95 @@
+/* Design tokens shared by all Orbo windows. Page-specific styles live in each page. */
+:root {
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", system-ui, sans-serif;
+  /* Rounded system face for the ring and portal: native, but with its own character. */
+  --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --image: #b197fc;
+  --video: #ff8094;
+  --audio: #5be08f;
+  --document: #74b0ff;
+  --data: #ffd84d;
+  --archive: #ffb878;
+  --folder: #9cc8ff;
+  --model: #5fd4d8;
+  --cad: #c9a8ff;
+  --typeface: #f2a2d0;
+  --ok: #5be08f;
+  --warn: #ffb878;
+  --danger: #ff6b7a;
+
+  --ease-spring: cubic-bezier(.2, 1.35, .4, 1);
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-in: cubic-bezier(.5, 0, .75, .4);
+}
+
+/* Classic: dark, high contrast */
+.style-classic {
+  --txt: #f4f5fb;
+  --mut: rgba(244, 245, 251, .62);
+  --faint: rgba(244, 245, 251, .38);
+  --surface: rgba(20, 22, 38, .78);
+  --surface-2: rgba(30, 33, 54, .86);
+  --surface-hot: rgba(40, 44, 72, .92);
+  --edge: rgba(255, 255, 255, .10);
+  --edge-strong: rgba(255, 255, 255, .22);
+  --specular: none;
+  --shadow: 0 18px 50px rgba(0, 0, 0, .45);
+  --control: rgba(255, 255, 255, .08);
+  --control-hot: rgba(255, 255, 255, .14);
+  --accent: #3d7bff;
+}
+
+/* Glass: light translucent surfaces with a specular top edge */
+.style-glass {
+  --txt: #ffffff;
+  --mut: rgba(255, 255, 255, .78);
+  --faint: rgba(255, 255, 255, .5);
+  --surface: linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .08));
+  --surface-2: linear-gradient(180deg, rgba(255, 255, 255, .30), rgba(255, 255, 255, .12));
+  --surface-hot: linear-gradient(180deg, rgba(255, 255, 255, .40), rgba(255, 255, 255, .18));
+  --edge: rgba(255, 255, 255, .30);
+  --edge-strong: rgba(255, 255, 255, .55);
+  --specular: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -1px 0 rgba(255, 255, 255, .08);
+  --shadow: 0 18px 50px rgba(10, 12, 40, .28);
+  --control: rgba(255, 255, 255, .16);
+  --control-hot: rgba(255, 255, 255, .26);
+  --accent: #ffffff;
+}
+
+.style-glass { text-shadow: 0 1px 2px rgba(0, 0, 0, .28); }
+
+html, body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--txt);
+  -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+* { box-sizing: border-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {
+  animation-duration: .01ms !important; transition-duration: .01ms !important;
+}
+
+/* Brand typeface (SIL OFL, assets/fonts/OFL.txt) for the wordmark and large headlines only. */
+@font-face {
+  font-family: "Nunito";
+  src: url("assets/fonts/Nunito.ttf") format("truetype");
+  font-weight: 200 1000;
+  font-display: block;
+}
+:root { --font-brand: "Nunito", var(--font-rounded); }
+
+/* Wordmark "orb◉": usage <span class="wordmark" aria-label="Orbo">orb<i class="ring-o"></i></span> */
+.wordmark { font-family: var(--font-brand); font-weight: 850; letter-spacing: -.02em; line-height: 1; white-space: nowrap; display: inline-flex; align-items: baseline; }
+.wordmark .ring-o { display: inline-block; width: .55em; height: .55em; margin-left: .015em; transform: translateY(.005em);
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Cg%20stroke-linejoin%3D%27round%27%20stroke-width%3D%273%27%3E%3Cpath%20d%3D%27M10.09%2023.33A48%2048%200%200%201%2046.86%202.10L48.04%2020.06A30%2030%200%200%200%2025.06%2033.33Z%27%20fill%3D%27%23b197fc%27%20stroke%3D%27%23b197fc%27/%3E%3Cpath%20d%3D%27M53.14%202.10A48%2048%200%200%201%2089.91%2023.33L74.94%2033.33A30%2030%200%200%200%2051.96%2020.06Z%27%20fill%3D%27%23ff8094%27%20stroke%3D%27%23ff8094%27/%3E%3Cpath%20d%3D%27M93.05%2028.77A48%2048%200%200%201%2093.05%2071.23L76.91%2063.27A30%2030%200%200%200%2076.91%2036.73Z%27%20fill%3D%27%235be08f%27%20stroke%3D%27%235be08f%27/%3E%3Cpath%20d%3D%27M89.91%2076.67A48%2048%200%200%201%2053.14%2097.90L51.96%2079.94A30%2030%200%200%200%2074.94%2066.67Z%27%20fill%3D%27%2374b0ff%27%20stroke%3D%27%2374b0ff%27/%3E%3Cpath%20d%3D%27M46.86%2097.90A48%2048%200%200%201%2010.09%2076.67L25.06%2066.67A30%2030%200%200%200%2048.04%2079.94Z%27%20fill%3D%27%23ffd84d%27%20stroke%3D%27%23ffd84d%27/%3E%3Cpath%20d%3D%27M6.95%2071.23A48%2048%200%200%201%206.95%2028.77L23.09%2036.73A30%2030%200%200%200%2023.09%2063.27Z%27%20fill%3D%27%23ffb878%27%20stroke%3D%27%23ffb878%27/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; }

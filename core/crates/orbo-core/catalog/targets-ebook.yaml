@@ -1,0 +1,93 @@
+# E-books, comics and subtitles (engine "ebook", pure Rust).
+# params: to = epub|txt|md|html|pdf for books, sub = srt|vtt|sbv|ass for subtitles
+
+targets:
+  - id: epub
+    title: EPUB
+    sub: E-Book für Reader und Apps
+    output: epub
+    engine: ebook
+    accepts: [txt, md, html, docx, fb2, mobi, azw3]
+    group: E-Book
+    params: { to: epub }
+
+  - id: book_pdf
+    title: PDF
+    sub: Buch als Seiten
+    output: pdf
+    engine: ebook
+    accepts: [epub, fb2, mobi, azw3]
+    group: E-Book
+    params: { to: pdf }
+
+  - id: book_txt
+    title: Text
+    sub: alle Kapitel als reiner Text
+    output: txt
+    engine: ebook
+    accepts: [epub, fb2, mobi, azw3]
+    group: E-Book
+    params: { to: txt }
+
+  - id: book_md
+    title: Markdown
+    sub: Kapitel mit Überschriften
+    output: md
+    engine: ebook
+    accepts: [epub, fb2, mobi, azw3]
+    group: E-Book
+    params: { to: md }
+
+  - id: book_html
+    title: HTML
+    sub: ganzes Buch in einer Datei
+    output: html
+    engine: ebook
+    accepts: [epub, fb2, mobi, azw3]
+    group: E-Book
+    params: { to: html }
+
+  - id: cbz_pdf
+    title: PDF
+    sub: eine Seite pro Bild
+    output: pdf
+    engine: ebook
+    accepts: [cbz]
+    group: E-Book
+    params: { to: pdf }
+
+  - id: sub_srt
+    title: SRT
+    sub: Untertitel, universell
+    output: srt
+    engine: ebook
+    accepts: [ass, sbv]
+    group: Untertitel
+    params: { sub: srt }
+
+  - id: sub_vtt
+    title: VTT
+    sub: Untertitel für das Web
+    output: vtt
+    engine: ebook
+    accepts: [ass, sbv]
+    group: Untertitel
+    params: { sub: vtt }
+
+  - id: sub_ass
+    title: ASS
+    sub: Untertitel mit Formatvorlage
+    output: ass
+    engine: ebook
+    accepts: [srt, vtt, sbv]
+    group: Untertitel
+    params: { sub: ass }
+
+  - id: sub_sbv
+    title: SBV
+    sub: Untertitel für YouTube
+    output: sbv
+    engine: ebook
+    accepts: [srt, vtt, ass]
+    group: Untertitel
+    params: { sub: sbv }

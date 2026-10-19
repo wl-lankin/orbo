@@ -1,0 +1,8 @@
+{
+  "bundle": {
+    "externalBin": [
+      "bin/ffmpeg",
+      "bin/ffprobe"
+    ]
+  }
+}

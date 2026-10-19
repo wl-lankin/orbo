@@ -1,0 +1,102 @@
+# CAD drawings. DWG needs the optional external program dwg2dxf (LibreDWG), see engines/cad.rs.
+targets:
+  - id: cad_svg
+    title: SVG
+    sub: Vektor in Originalmaßen (mm)
+    output: svg
+    engine: cad
+    accepts: [dxf]
+    group: CAD
+    params: { op: svg }
+
+  - id: cad_pdf
+    title: PDF
+    sub: Vektor, Seite passend zur Zeichnung
+    output: pdf
+    engine: cad
+    accepts: [dxf]
+    group: CAD
+    params: { op: pdf }
+
+  - id: cad_png
+    title: PNG
+    sub: Vorschaubild auf weißem Grund
+    output: png
+    engine: cad
+    accepts: [dxf]
+    group: CAD
+    params: { op: png }
+    controls: [resize]
+
+  - id: cad_dxf_clean
+    title: DXF bereinigt
+    sub: R12, Kurven aufgelöst, Blöcke aufgelöst
+    output: dxf
+    engine: cad
+    accepts: [dxf, dwg]
+    requires: []
+    same_format: true
+    suffix: " (bereinigt)"
+    group: CAD
+    params: { op: dxf }
+
+  - id: dwg_svg
+    title: SVG
+    sub: Vektor in Originalmaßen (mm)
+    output: svg
+    engine: cad
+    accepts: [dwg]
+    requires: [dwg2dxf]
+    group: CAD
+    params: { op: svg }
+
+  - id: dwg_pdf
+    title: PDF
+    sub: Vektor, Seite passend zur Zeichnung
+    output: pdf
+    engine: cad
+    accepts: [dwg]
+    requires: [dwg2dxf]
+    group: CAD
+    params: { op: pdf }
+
+  - id: dwg_png
+    title: PNG
+    sub: Vorschaubild auf weißem Grund
+    output: png
+    engine: cad
+    accepts: [dwg]
+    requires: [dwg2dxf]
+    group: CAD
+    params: { op: png }
+    controls: [resize]
+
+  - id: dwg_dxf
+    title: DXF
+    sub: unverändert über LibreDWG
+    output: dxf
+    engine: cad
+    accepts: [dwg]
+    requires: [dwg2dxf]
+    group: CAD
+    params: { op: dwg_dxf }
+
+  - id: dxf_clean_dwg
+    title: DXF bereinigt
+    sub: R12, Kurven aufgelöst, Blöcke aufgelöst
+    output: dxf
+    engine: cad
+    accepts: [dwg]
+    requires: [dwg2dxf]
+    suffix: " (bereinigt)"
+    group: CAD
+    params: { op: dxf }
+
+  - id: svg_to_dxf
+    title: DXF
+    sub: Konturen in Millimetern
+    output: dxf
+    engine: cad
+    accepts: [svg]
+    group: CAD
+    params: { op: svg_dxf }

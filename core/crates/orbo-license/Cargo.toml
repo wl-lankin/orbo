@@ -1,0 +1,16 @@
+[package]
+name = "orbo-license"
+edition.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "orbo-license"
+path = "src/bin/orbo-license.rs"
+
+[dependencies]
+ed25519-dalek = "2"
+base64 = "0.22"
+getrandom = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"

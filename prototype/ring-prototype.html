@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbit Prototyp</title>
+<style>
+:root{
+  --txt:#f4f5fb; --mut:rgba(244,245,251,.6);
+  --glass:rgba(18,20,34,.62); --brd:rgba(255,255,255,.12);
+  --image:#b197fc; --video:#ff8094; --audio:#5be08f; --doc:#74b0ff; --data:#ffd84d;
+  --archive:#ffb878; --folder:#9cc8ff; --intent:#eef1f8;
+  --ok:#5be08f; --warn:#ffb878;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1020;color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable","Segoe UI",system-ui,sans-serif;
+  user-select:none;-webkit-user-select:none}
+#desk{position:fixed;inset:0;background:
+  radial-gradient(1100px 760px at 82% 8%,#40307a 0%,transparent 60%),
+  radial-gradient(900px 700px at 8% 92%,#123d63 0%,transparent 62%),
+  radial-gradient(760px 520px at 62% 78%,#5c1f43 0%,transparent 60%),
+  linear-gradient(160deg,#0b1020,#161b36)}
+
+/* Menüleiste */
+#bar{position:fixed;top:0;left:0;right:0;height:30px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;font-size:12.5px;background:rgba(10,12,24,.42);backdrop-filter:blur(20px) saturate(1.6);
+  -webkit-backdrop-filter:blur(20px) saturate(1.6);border-bottom:1px solid rgba(255,255,255,.06);z-index:30}
+#bar .l{display:flex;gap:16px;align-items:center;font-weight:600}
+#bar .l span+span{font-weight:400;color:var(--mut)}
+#bar .r{display:flex;gap:16px;align-items:center;color:var(--mut)}
+#bar label{display:flex;gap:6px;align-items:center;cursor:pointer}
+#bar input{accent-color:#b197fc;margin:0}
+.dot{width:14px;height:14px;border-radius:50%;background:conic-gradient(var(--image),var(--video),var(--audio),var(--doc),var(--data),var(--image));
+  -webkit-mask:radial-gradient(circle,transparent 3px,#000 3.5px);mask:radial-gradient(circle,transparent 3px,#000 3.5px)}
+
+/* Dateien */
+.file{position:absolute;width:96px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px;border-radius:10px;cursor:default;z-index:5}
+.file.sel{background:rgba(255,255,255,.1)}
+.file.sel .fname{background:#3d5bd9}
+.file.dragging{opacity:.35}
+.fname{font-size:11.5px;line-height:1.25;text-align:center;padding:1px 6px;border-radius:5px;max-width:96px;word-break:break-word;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.fmeta{font-size:10px;color:var(--mut);margin-top:-4px}
+.paper{--k:var(--doc);position:relative;width:56px;height:70px;border-radius:7px;background:#f6f7fb;box-shadow:0 8px 20px rgba(0,0,0,.4),inset 0 0 0 1px rgba(0,0,0,.06);overflow:visible}
+.paper .thumb{position:absolute;left:5px;right:5px;top:5px;height:42px;border-radius:4px;overflow:hidden}
+.badge{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font:700 9px/1 -apple-system,"Segoe UI",sans-serif;letter-spacing:.3px;
+  padding:3px 5px;border-radius:4px;background:var(--k);color:#10131f;white-space:nowrap}
+.k-image{--k:var(--image)} .k-video{--k:var(--video)} .k-audio{--k:var(--audio)} .k-doc{--k:var(--doc)}
+.k-data{--k:var(--data)} .k-archive{--k:var(--archive)} .k-folder{--k:var(--folder)} .k-intent{--k:var(--intent)}
+.paper.k-folder{background:none;box-shadow:none}
+.paper.k-folder .thumb{left:-2px;right:-2px;top:14px;height:50px;border-radius:6px;overflow:visible;
+  background:linear-gradient(180deg,#8fc0ff,#5d97ea);box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.paper.k-folder .thumb::before{content:"";position:absolute;left:0;top:-7px;width:24px;height:10px;border-radius:4px 4px 0 0;background:#7aaef5}
+.paper.k-folder .badge{bottom:10px}
+
+/* Fortschritt */
+.prog{position:absolute;inset:-9px;width:74px;height:88px;pointer-events:none;opacity:0;transition:opacity .2s}
+.prog rect{fill:none;stroke:var(--k);stroke-width:3;stroke-linecap:round;stroke-dasharray:290;stroke-dashoffset:290}
+.busy .prog{opacity:1}
+.busy .prog rect{stroke-dashoffset:0;transition:stroke-dashoffset var(--t) cubic-bezier(.4,.1,.3,1)}
+.busy .paper::after{content:"";position:absolute;inset:0;border-radius:7px;background:rgba(10,12,24,.35)}
+
+.file.mat{animation:mat .7s cubic-bezier(.2,1.3,.35,1) both}
+.file.mat .paper{animation:glow 1.4s ease-out}
+@keyframes mat{0%{transform:scale(.15);opacity:0;filter:blur(10px) brightness(2.4)}60%{transform:scale(1.1);opacity:1;filter:blur(0) brightness(1.4)}100%{transform:none;filter:none}}
+@keyframes glow{0%{box-shadow:0 0 0 0 var(--k),0 8px 20px rgba(0,0,0,.4)}40%{box-shadow:0 0 0 10px transparent,0 0 40px 6px var(--k)}100%{box-shadow:0 0 0 0 transparent,0 8px 20px rgba(0,0,0,.4)}}
+.file.flash{animation:flash 1s ease}
+@keyframes flash{0%,100%{background:transparent}30%{background:rgba(255,255,255,.22)}}
+.file.gone{transition:transform .25s,opacity .25s;transform:scale(.3);opacity:0}
+
+/* Ghost */
+.ghost{position:fixed;z-index:60;pointer-events:none;transform:translate(-50%,-55%) rotate(-3deg);transition:transform .16s cubic-bezier(.2,1.4,.4,1)}
+.ghost .paper{box-shadow:0 18px 40px rgba(0,0,0,.55)}
+.ghost .gcount{position:absolute;top:-8px;right:-10px;background:#ff5a5f;color:#fff;font:700 11px/20px sans-serif;min-width:20px;text-align:center;border-radius:10px;display:none}
+.ghost .gtag{position:absolute;left:50%;top:78px;transform:translateX(-50%) scale(.8);opacity:0;white-space:nowrap;font-size:12px;font-weight:700;
+  padding:4px 9px;border-radius:999px;background:var(--k);color:#10131f;transition:.15s}
+.ghost.aim{transform:translate(-50%,-55%) scale(.78)}
+.ghost.aim .gtag{opacity:1;transform:translateX(-50%) scale(1)}
+.ghost.back{transition:left .35s cubic-bezier(.3,.7,.3,1),top .35s cubic-bezier(.3,.7,.3,1),opacity .35s,transform .35s;opacity:0;transform:translate(-50%,-55%) scale(.6)}
+
+/* Ring */
+#ring{position:fixed;width:540px;height:540px;margin:-270px 0 0 -270px;pointer-events:none;z-index:50;display:none}
+#ring.show{display:block}
+#ringBg{position:absolute;left:50%;top:50%;width:364px;height:364px;margin:-182px 0 0 -182px;border-radius:50%;
+  background:radial-gradient(circle,rgba(12,14,26,.5) 0 34%,rgba(12,14,26,.18) 36%,rgba(12,14,26,.18) 100%);
+  backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);
+  transform:scale(.4);opacity:0;transition:transform .34s cubic-bezier(.2,1.25,.35,1),opacity .18s}
+#ring.open #ringBg{transform:none;opacity:1}
+#ring svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.sec{transform-box:fill-box;transform-origin:center;opacity:0;
+  transform:translate(calc(var(--ux) * -46px),calc(var(--uy) * -46px)) scale(.55);
+  transition:transform .36s cubic-bezier(.2,1.35,.4,1) var(--d),opacity .2s var(--d)}
+#ring.open .sec{opacity:1;transform:none}
+#ring.open .sec.hot{transform:translate(calc(var(--ux) * 8px),calc(var(--uy) * 8px)) scale(1.035);transition-delay:0s}
+.sec path{fill:rgba(20,22,38,.72);stroke:rgba(255,255,255,.1);stroke-width:1;transition:fill .12s,stroke .12s}
+.sec.intent path{stroke-dasharray:5 4;stroke:rgba(255,255,255,.28)}
+.sec.hot path{fill:color-mix(in srgb,var(--k) 30%,rgba(20,22,38,.82));stroke:var(--k);stroke-width:1.6;stroke-dasharray:none}
+.sec .dflt{fill:var(--k);opacity:.9}
+.sec text{fill:var(--txt);text-anchor:middle;dominant-baseline:middle}
+.sec .n{font-size:16px;font-weight:750;letter-spacing:.2px}
+.sec .s{font-size:10.5px;fill:var(--mut)}
+.sec .z{font-size:10.5px;font-weight:650;fill:var(--k)}
+.sec.hot .s{fill:#fff}
+.pre{transform-box:fill-box;transform-origin:center;animation:prein .26s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--d)}
+.pre path{fill:rgba(20,22,38,.8);stroke:color-mix(in srgb,var(--k) 50%,transparent);stroke-width:1}
+.pre.hot path{fill:color-mix(in srgb,var(--k) 45%,rgba(20,22,38,.8));stroke:var(--k)}
+.pre text{fill:var(--txt);text-anchor:middle;dominant-baseline:middle;font-size:11.5px;font-weight:650}
+.pre .z{font-size:9.5px;font-weight:500;fill:var(--mut)}
+@keyframes prein{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+#ctr circle{fill:rgba(14,16,28,.82);stroke:rgba(255,255,255,.12);stroke-width:1;transition:stroke .12s,fill .12s}
+#ctr.hot circle{stroke:var(--k);stroke-width:2;fill:color-mix(in srgb,var(--k) 18%,rgba(14,16,28,.85))}
+.cinfo{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px;
+  color:var(--txt);font-family:inherit;padding:6px}
+.cinfo b{font-size:15px;line-height:1.1}
+.cinfo .m{font-size:9.5px;color:var(--mut);line-height:1.25}
+.cinfo .g{font-size:10px;font-weight:650;color:var(--k)}
+.cinfo .big{font-size:20px;font-weight:800;color:var(--k)}
+.cinfo .ok{color:var(--ok)} .cinfo .up{color:var(--warn)}
+#ring.closing{transition:transform .28s cubic-bezier(.5,0,.7,.4),opacity .28s;transform:scale(.25);opacity:0}
+#ring.dismiss{transition:transform .2s,opacity .2s;transform:scale(1.12);opacity:0}
+
+/* Notch-Portal */
+#notch{position:fixed;top:0;left:50%;transform:translateX(-50%);width:190px;height:30px;background:#000;border-radius:0 0 15px 15px;z-index:45;overflow:hidden;
+  transition:width .42s cubic-bezier(.2,1.2,.3,1),height .42s cubic-bezier(.2,1.2,.3,1),border-radius .3s,box-shadow .3s}
+#notch.open{width:min(700px,94vw);height:146px;border-radius:0 0 30px 30px;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+#notch .nh{height:30px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:11px;color:#8a8fa3}
+#notch .nh .dot{width:11px;height:11px}
+.ntiles{display:flex;gap:8px;padding:6px 14px 14px;opacity:0;transition:opacity .2s .12s}
+#notch.open .ntiles{opacity:1}
+.ntile{flex:1;min-width:0;height:94px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:.14s;padding:4px}
+.ntile b{font-size:15px}
+.ntile span{font-size:10px;color:var(--mut);text-align:center;line-height:1.2}
+.ntile i{font-style:normal;font-size:10px;font-weight:650;color:var(--k)}
+.ntile.hot{background:color-mix(in srgb,var(--k) 28%,#0d0d12);border-color:var(--k);transform:translateY(4px) scale(1.05)}
+
+/* Hinweise */
+#hint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:14px;align-items:center;z-index:20;
+  padding:9px 16px;border-radius:999px;background:var(--glass);border:1px solid var(--brd);font-size:12.5px;color:var(--mut);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);white-space:nowrap}
+#hint b{color:var(--txt);font-weight:600}
+kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.25);border-bottom-width:2px;
+  font:600 11.5px -apple-system,"Segoe UI",sans-serif;color:var(--txt);text-align:center}
+#card{position:fixed;right:40px;top:50%;transform:translateY(-50%);width:330px;padding:22px 22px 18px;border-radius:20px;z-index:10;
+  background:var(--glass);border:1px solid var(--brd);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);
+  box-shadow:0 30px 80px rgba(0,0,0,.35);transition:opacity .3s}
+#card h1{margin:0 0 4px;font-size:24px;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
+#card h1 .dot{width:20px;height:20px;-webkit-mask:radial-gradient(circle,transparent 4px,#000 4.5px);mask:radial-gradient(circle,transparent 4px,#000 4.5px)}
+#card p{margin:0 0 16px;color:var(--mut);font-size:13px;line-height:1.45}
+#card ol{margin:0 0 14px;padding:0;list-style:none;counter-reset:s;display:grid;gap:10px}
+#card ol li{counter-increment:s;display:grid;grid-template-columns:24px 1fr;gap:10px;font-size:13px;line-height:1.4}
+#card ol li::before{content:counter(s);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;
+  background:rgba(255,255,255,.1)}
+#card ul{margin:0;padding:12px 0 0;border-top:1px solid rgba(255,255,255,.08);list-style:none;display:grid;gap:7px;font-size:12px;color:var(--mut)}
+#card ul b{color:var(--txt);font-weight:600}
+body.active #card{opacity:.25}
+
+#toasts{position:fixed;left:50%;bottom:66px;transform:translateX(-50%);display:flex;flex-direction:column-reverse;gap:8px;align-items:center;z-index:70}
+.toast{display:flex;align-items:center;gap:12px;padding:9px 10px 9px 14px;border-radius:14px;background:rgba(18,20,34,.82);border:1px solid var(--brd);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);font-size:12.5px;box-shadow:0 14px 40px rgba(0,0,0,.4);
+  animation:tin .4s cubic-bezier(.2,1.3,.4,1)}
+.toast .sw{width:9px;height:9px;border-radius:50%;background:var(--k)}
+.toast b{font-weight:650}
+.toast .d{color:var(--ok);font-weight:650}
+.toast .d.up{color:var(--warn)}
+.toast button{font:inherit;font-size:12px;color:var(--txt);background:rgba(255,255,255,.1);border:0;border-radius:8px;padding:5px 10px;cursor:pointer}
+.toast button:hover{background:rgba(255,255,255,.18)}
+.toast.out{transition:.3s;opacity:0;transform:translateY(8px)}
+@keyframes tin{from{opacity:0;transform:translateY(14px) scale(.96)}}
+
+/* Einstellungen */
+#bar .gear{background:none;border:0;color:inherit;font:inherit;cursor:pointer;display:flex;gap:6px;align-items:center;padding:0}
+#bar .gear:hover{color:var(--txt)}
+#settings{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(5,7,16,.45)}
+#settings.show{display:flex}
+.sheet{position:relative;width:min(700px,94vw);height:min(480px,90vh);display:grid;grid-template-columns:174px 1fr;border-radius:16px;overflow:hidden;
+  background:rgba(24,26,44,.92);border:1px solid var(--brd);box-shadow:0 40px 100px rgba(0,0,0,.55);
+  backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);animation:sin .22s cubic-bezier(.2,1.2,.4,1)}
+@keyframes sin{from{opacity:0;transform:scale(.96)}}
+.sheet aside{padding:44px 10px 12px;background:rgba(255,255,255,.04);border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:3px}
+.sheet .tab{font:inherit;font-size:13px;text-align:left;color:var(--txt);background:none;border:0;border-radius:8px;padding:7px 10px;cursor:pointer}
+.sheet .tab:hover{background:rgba(255,255,255,.07)}
+.sheet .tab.on{background:rgba(255,255,255,.16)}
+.sheet .sx{position:absolute;left:14px;top:13px;width:14px;height:14px;border-radius:50%;border:0;background:#ff5f57;cursor:pointer;padding:0;font-size:0}
+.sheet .sx:hover{filter:brightness(1.15)}
+.sheet .panes{overflow:auto;padding:22px 26px}
+.pane{display:none}
+.pane.on{display:block}
+.pane h2{margin:0 0 8px;font-size:17px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:13px}
+.row small,.note{display:block;font-size:11.5px;color:var(--mut);line-height:1.35;margin-top:2px}
+.note{margin:10px 0 0}
+.sheet input[type=text],.sheet select{font:inherit;font-size:12.5px;color:var(--txt);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+  border-radius:8px;padding:5px 8px;min-width:0;user-select:text;-webkit-user-select:text}
+.sheet select option{color:#111}
+.sheet input[type=text]{width:100%}
+.sheet :disabled{opacity:.5}
+.sheet input[type=checkbox].tg{appearance:none;-webkit-appearance:none;margin:0;flex:none;width:38px;height:22px;border-radius:11px;background:rgba(255,255,255,.2);position:relative;cursor:pointer;transition:background .15s}
+.sheet input.tg::after{content:"";position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:transform .15s}
+.sheet input.tg:checked{background:var(--ok)}
+.sheet input.tg:checked::after{transform:translateX(16px)}
+.seg{display:inline-flex;padding:2px;border-radius:9px;background:rgba(255,255,255,.1)}
+.seg button{font:inherit;font-size:12.5px;color:var(--txt);background:none;border:0;border-radius:7px;padding:4px 14px;cursor:pointer}
+.seg button.on{background:rgba(255,255,255,.28)}
+.radios{display:grid;gap:8px;width:100%}
+.radios label{display:flex;gap:8px;align-items:center;font-size:13px}
+.fld{display:flex;gap:8px;align-items:center;width:100%}
+.sheet button.btn{font:inherit;font-size:12.5px;color:var(--txt);background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:5px 12px;cursor:pointer;white-space:nowrap}
+.sheet button.btn:hover{background:rgba(255,255,255,.22)}
+.st.ok{color:var(--ok);font-weight:650}
+.st.bad{color:#ff8a94;font-weight:650}
+.warnl{color:var(--warn);font-size:12px;margin-top:10px}
+.checks{display:grid;gap:8px;margin-top:10px}
+.checks label{display:flex;gap:8px;align-items:center;font-size:13px}
+.checks input{accent-color:#b197fc;margin:0}
+body.reduce *,body.reduce *::before,body.reduce *::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+
+/* Stil Glas */
+body.theme-glass{
+  --txt:#fff; --mut:rgba(255,255,255,.78);
+  --gl:linear-gradient(145deg,rgba(255,255,255,.20),rgba(255,255,255,.07));
+  --gtint:linear-gradient(rgba(24,28,64,.2),rgba(24,28,64,.2));
+  --gshadow:inset 0 1px 0 rgba(255,255,255,.55),0 18px 50px rgba(10,12,40,.3);
+}
+body.theme-glass #desk{background:
+  radial-gradient(1000px 700px at 80% 6%,#9a77ff 0%,transparent 60%),
+  radial-gradient(900px 700px at 6% 94%,#1ec0e6 0%,transparent 62%),
+  radial-gradient(760px 520px at 62% 80%,#ff6aa8 0%,transparent 60%),
+  radial-gradient(620px 440px at 28% 18%,#ffb45e 0%,transparent 60%),
+  linear-gradient(160deg,#2c3e96,#5d3d9e)}
+body.theme-glass #bar,body.theme-glass #card,body.theme-glass #hint,body.theme-glass .toast,body.theme-glass .sheet{
+  background:var(--gl),var(--gtint);border:1px solid rgba(255,255,255,.28);box-shadow:var(--gshadow);
+  backdrop-filter:blur(28px) saturate(1.8);-webkit-backdrop-filter:blur(28px) saturate(1.8);text-shadow:0 1px 2px rgba(0,0,0,.28)}
+body.theme-glass #bar{border-width:0 0 1px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 6px 20px rgba(10,12,40,.18)}
+body.theme-glass #card{border-radius:30px;padding:26px 26px 20px}
+body.theme-glass #card ol li::before{background:rgba(255,255,255,.22)}
+body.theme-glass #hint{border-radius:999px}
+body.theme-glass .toast{border-radius:20px}
+body.theme-glass .toast button{background:linear-gradient(rgba(255,255,255,.32),rgba(255,255,255,.12));border:1px solid rgba(255,255,255,.3);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5);border-radius:11px;text-shadow:inherit}
+body.theme-glass .toast button:hover{background:linear-gradient(rgba(255,255,255,.42),rgba(255,255,255,.2))}
+body.theme-glass kbd{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.12)}
+body.theme-glass .sheet{border-radius:30px}
+body.theme-glass .sheet aside{background:rgba(255,255,255,.08);border-right-color:rgba(255,255,255,.18)}
+body.theme-glass .sheet .tab.on{background:rgba(255,255,255,.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+body.theme-glass .sheet input[type=text],body.theme-glass .sheet select,body.theme-glass .sheet button.btn,body.theme-glass .seg{
+  background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+body.theme-glass .seg{border:0}
+body.theme-glass .row{border-bottom-color:rgba(255,255,255,.16)}
+body.theme-glass .sheet .panes{text-shadow:0 1px 2px rgba(0,0,0,.28)}
+body.theme-glass #ringBg{
+  background:radial-gradient(circle at 50% 26%,rgba(255,255,255,.26),rgba(255,255,255,.08) 70%),rgba(30,34,80,.12);
+  border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 24px 70px rgba(10,12,40,.35);
+  backdrop-filter:blur(28px) saturate(1.8);-webkit-backdrop-filter:blur(28px) saturate(1.8)}
+body.theme-glass .sec path{fill:rgba(255,255,255,.10);stroke:url(#gSpec);stroke-width:1.2}
+body.theme-glass .sec.intent path{stroke-dasharray:5 4;stroke:url(#gSpec)}
+body.theme-glass .sec.hot path{fill:color-mix(in srgb,var(--k) 38%,rgba(255,255,255,.14));stroke:color-mix(in srgb,var(--k) 55%,#fff);stroke-width:1.8;stroke-dasharray:none;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--k) 75%,transparent))}
+body.theme-glass .sec text,body.theme-glass .pre text,body.theme-glass .cinfo{text-shadow:0 1px 2px rgba(0,0,0,.35)}
+body.theme-glass .sec .s{fill:rgba(255,255,255,.8)}
+body.theme-glass .sec .z{fill:color-mix(in srgb,var(--k) 55%,#fff)}
+body.theme-glass .pre path{fill:rgba(255,255,255,.16);stroke:color-mix(in srgb,var(--k) 55%,#fff);stroke-width:1.2}
+body.theme-glass .pre.hot path{fill:color-mix(in srgb,var(--k) 42%,rgba(255,255,255,.14));filter:drop-shadow(0 0 8px color-mix(in srgb,var(--k) 70%,transparent))}
+body.theme-glass .pre .z{fill:rgba(255,255,255,.85)}
+body.theme-glass #ctr circle{fill:url(#gLens);stroke:url(#gSpec);stroke-width:1.2}
+body.theme-glass #ctr.hot circle{fill:color-mix(in srgb,var(--k) 30%,rgba(255,255,255,.16));stroke:color-mix(in srgb,var(--k) 55%,#fff);stroke-width:2;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--k) 70%,transparent))}
+body.theme-glass .ntile{background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.18);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5);border-radius:22px}
+body.theme-glass .ntile.hot{background:linear-gradient(180deg,color-mix(in srgb,var(--k) 42%,rgba(255,255,255,.1)),color-mix(in srgb,var(--k) 20%,#0d0d12));border-color:color-mix(in srgb,var(--k) 60%,#fff)}
+
+@media (max-width:1100px){#card{display:none}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div id="desk"></div>
+
+<div id="bar">
+  <div class="l"><span class="dot"></span><span>Orbit</span><span>Prototyp</span></div>
+  <div class="r">
+    <button class="gear" id="btnSettings" title="Einstellungen (⌘,)">⚙ Einstellungen</button>
+    <label><input type="checkbox" id="optAuto"> Ring ohne Taste</label>
+    <label><input type="checkbox" id="optSound"> Klick-Ton</label>
+  </div>
+</div>
+<div id="notch"><div class="nh"><span class="dot"></span>Orbit-Portal</div><div class="ntiles"></div></div>
+
+<div id="card">
+  <h1><span class="dot"></span>Orbit</h1>
+  <p>Umwandeln, ohne ein Programm zu öffnen. Der Ring kennt die Datei und zeigt nur, was dazu passt.</p>
+  <ol>
+    <li><span>Eine Datei links greifen und ziehen.</span></li>
+    <li><span>Beim Ziehen <kbd class="key">⌥</kbd> drücken oder die Datei kurz <b>schütteln</b>.</span></li>
+    <li><span>Auf einem Feld loslassen. Die <b>Mitte</b> ist der beste Vorschlag.</span></li>
+  </ol>
+  <ul>
+    <li><b>Verweilen</b> auf einem Feld zeigt Voreinstellungen</li>
+    <li><b>Mausrad</b> auf einem Feld ändert die Qualität</li>
+    <li><b>Nach oben zur Notch</b> ziehen öffnet das Portal, ganz ohne Taste</li>
+    <li><b>Esc</b> oder weit wegziehen bricht ab</li>
+  </ul>
+</div>
+
+<div id="ring">
+  <div id="ringBg"></div>
+  <svg viewBox="-270 -270 540 540">
+    <defs>
+      <linearGradient id="gSpec" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient>
+      <radialGradient id="gLens" cx=".5" cy=".28" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset=".6" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity=".06"/></radialGradient>
+    </defs>
+    <g id="secs"></g><g id="pres"></g>
+    <g id="ctr"><circle r="60"></circle><foreignObject x="-56" y="-56" width="112" height="112"><div class="cinfo" xmlns="http://www.w3.org/1999/xhtml"></div></foreignObject></g>
+  </svg>
+</div>
+
+<div id="settings" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-label="Einstellungen">
+    <button class="sx" id="sClose" title="Schließen" aria-label="Schließen">x</button>
+    <aside>
+      <button class="tab on" data-tab="gen">Allgemein</button>
+      <button class="tab" data-tab="trg">Auslöser</button>
+      <button class="tab" data-tab="out">Ausgabe</button>
+      <button class="tab" data-tab="ai">KI (lokal)</button>
+    </aside>
+    <div class="panes">
+      <section class="pane on" data-pane="gen">
+        <h2>Allgemein</h2>
+        <div class="row"><span>Darstellung</span><span class="seg" id="sTheme"><button data-v="classic">Klassisch</button><button data-v="glass">Glas</button></span></div>
+        <div class="row"><span>Klick-Ton</span><input type="checkbox" class="tg" id="sSound"></div>
+        <div class="row"><span>Bewegung reduzieren</span><input type="checkbox" class="tg" id="sReduce"></div>
+      </section>
+      <section class="pane" data-pane="trg">
+        <h2>Auslöser</h2>
+        <div class="row"><span>Taste</span><select id="sTrigger"><option value="alt">⌥ Option / Alt</option><option value="ctrl">⌃ Control</option><option value="shift">⇧ Shift</option><option value="fn">fn</option></select></div>
+        <div class="note">In dieser Browser-Demo funktioniert nur ⌥ / Alt.</div>
+        <div class="row"><span>Schütteln</span><input type="checkbox" class="tg" id="sShake"></div>
+        <div class="row"><span>Ring ohne Taste</span><input type="checkbox" class="tg" id="sAuto"></div>
+        <div class="row"><span>Notch-Portal</span><input type="checkbox" class="tg" id="sNotch"></div>
+      </section>
+      <section class="pane" data-pane="out">
+        <h2>Ausgabe</h2>
+        <div class="row" style="align-items:flex-start"><span>Speicherort</span>
+          <div class="radios" style="max-width:300px">
+            <label><input type="radio" name="store" value="side"> Neben dem Original</label>
+            <label><input type="radio" name="store" value="custom"> Eigener Ordner ...</label>
+            <input type="text" id="sFolder" readonly>
+          </div></div>
+        <div class="row"><span>Namensschema</span><select id="sScheme"><option value="name">Name.jpg</option><option value="fmt">Name (JPG).jpg</option><option value="conv">Name konvertiert.jpg</option></select></div>
+        <div class="row"><span>Original nie überschreiben<small>Original bleibt immer erhalten</small></span><input type="checkbox" class="tg" checked disabled></div>
+      </section>
+      <section class="pane" data-pane="ai">
+        <h2>KI (lokal)</h2>
+        <div class="note" style="margin:0 0 6px">Optional. Nutzt ein lokales Ollama auf diesem Rechner. Ohne Ollama funktioniert Orbit genauso, nur ohne KI-Aktionen.</div>
+        <div class="row"><span>Ollama verwenden</span><input type="checkbox" class="tg" id="sOllama"></div>
+        <div class="row"><span>Server</span><div class="fld" style="max-width:300px"><input type="text" id="sServer" spellcheck="false"></div></div>
+        <div id="sWarn" class="warnl" hidden>Achtung: Dieser Server liegt nicht auf diesem Rechner. Dateiinhalte würden das Gerät verlassen.</div>
+        <div class="row"><span><button class="btn" id="sTest">Verbindung testen</button></span><span class="st" id="sStatus"></span></div>
+        <div id="sInstall" class="note" hidden>Ollama installieren und starten: ollama serve</div>
+        <div class="row"><span>Modell</span><select id="sModel" disabled><option value="">Nicht verbunden</option></select></div>
+        <div class="checks">
+          <label><input type="checkbox" id="aiRename"> Dateien sinnvoll umbenennen</label>
+          <label><input type="checkbox" id="aiAlt"> Bildbeschreibung / Alt-Text</label>
+          <label><input type="checkbox" id="aiSum"> Zusammenfassung (PDF, Text, Transkript)</label>
+          <label><input type="checkbox" id="aiTr"> Übersetzen</label>
+          <label><input type="checkbox" id="aiCmd"> Befehl in eigenen Worten (z. B. „als 800px WEBP“)</label>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<div id="hint"><span><b>Ziehen</b></span><span>dann <kbd class="key">⌥</kbd> halten oder schütteln</span><span>Loslassen auf einem Feld</span></div>
+
+<script>
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const KEY = isMac ? '⌥' : 'Alt';
+document.querySelectorAll('.key').forEach(k => k.textContent = KEY);
+
+const RIN = 64, ROUT = 180, PIN = 190, POUT = 244;
+const MB = 1024 * 1024, KB = 1024;
+const IMGQ = [['Web', .6], ['Ausgewogen', 1], ['Maximal', 2.1]];
+
+// Ring options per source format, clockwise from the top. def = index of the center suggestion.
+const OPTS = {
+  PNG: { def: 0, o: [
+    { to: 'WEBP', sub: 'behält Transparenz', ratio: .115, ext: 'webp', q: 1, presets: IMGQ },
+    { to: 'AVIF', sub: 'kleinste Datei', ratio: .08, ext: 'avif', q: 1, presets: IMGQ },
+    { to: 'Web', intent: 1, sub: '512 px · WEBP', ratio: .035, ext: 'webp', out: '{b} (Web).webp' },
+    { to: 'SVG', sub: 'vektorisieren', ratio: .02, ext: 'svg', t: 1700 },
+    { to: 'ICO', sub: 'App-Icon 16 bis 256', ratio: .05, ext: 'ico' },
+    { to: 'JPG', sub: 'weißer Hintergrund', ratio: .17, ext: 'jpg', q: 1, presets: IMGQ },
+  ]},
+  HEIC: { def: 0, o: [
+    { to: 'JPG', sub: 'überall kompatibel', ratio: .78, ext: 'jpg', q: 1, presets: IMGQ },
+    { to: 'Mail', intent: 1, sub: '1600 px · unter 1 MB', ratio: .21, ext: 'jpg', out: '{b} (Mail).jpg' },
+    { to: 'Text', intent: 1, sub: 'erkennen (OCR)', clip: 'Text in der Zwischenablage · 312 Zeichen', ext: 'txt' },
+    { to: 'Privat', intent: 1, sub: 'GPS und Kamera weg', ratio: .99, ext: 'heic', out: '{b} (privat).heic' },
+    { to: 'PNG', sub: 'verlustfrei', ratio: 4.6, ext: 'png' },
+    { to: 'WEBP', sub: 'klein, fürs Web', ratio: .18, ext: 'webp', q: 1, presets: IMGQ },
+  ]},
+  MOV: { def: 0, o: [
+    { to: 'MP4', sub: '⚡ ohne Neukodierung', ratio: .98, ext: 'mp4', t: 800 },
+    { to: 'HEVC', sub: 'halbe Größe', ratio: .47, ext: 'mp4', out: '{b} (HEVC).mp4', t: 2600, presets: [['4K', 1], ['1080p', .32], ['720p', .15]] },
+    { to: 'Mail', intent: 1, sub: 'unter 25 MB · 720p', ratio: .039, ext: 'mp4', out: '{b} (Mail).mp4', t: 2400 },
+    { to: 'SRT', sub: 'Untertitel · lokale KI', ratio: .000007, ext: 'srt', kind: 'doc', t: 2800 },
+    { to: 'M4A', sub: 'nur Ton ⚡', ratio: .0018, ext: 'm4a', kind: 'audio' },
+    { to: 'GIF', sub: 'Ausschnitt 5 s', ratio: .013, ext: 'gif', kind: 'image', t: 1800 },
+  ]},
+  SCAN: { def: 0, o: [
+    { to: 'OCR', intent: 1, sub: 'durchsuchbar machen', ratio: 1.03, ext: 'pdf', out: '{b} (OCR).pdf', t: 2400 },
+    { to: 'Klein', intent: 1, sub: 'komprimieren', ratio: .14, ext: 'pdf', out: '{b} (klein).pdf', presets: [['Bildschirm', .6], ['E-Mail', 1], ['Druck', 3.2]] },
+    { to: 'JPG', sub: 'Seiten als Bilder', ratio: .9, folder: 1, count: 6, out: '{b} (Seiten)' },
+    { to: 'Trennen', sub: '6 Einzelseiten', ratio: 1, folder: 1, count: 6, out: '{b} (einzeln)' },
+    { to: 'DOCX', sub: 'bearbeitbar', ratio: .05, ext: 'docx', t: 2000 },
+    { to: 'TXT', sub: 'nur Text', ratio: .0022, ext: 'txt' },
+  ]},
+  WAV: { def: 0, o: [
+    { to: 'MP3', sub: 'läuft überall', ratio: .12, ext: 'mp3', q: 1, presets: [['128k', .67], ['192k', 1], ['320k', 1.67]] },
+    { to: 'M4A', sub: 'kleiner, gleich gut', ratio: .083, ext: 'm4a', q: 1 },
+    { to: 'Transkript', intent: 1, sub: 'Text · lokale KI', ratio: .00008, ext: 'txt', kind: 'doc', out: '{b} (Transkript).txt', t: 2800 },
+    { to: 'Lautheit', intent: 1, sub: 'angleichen', ratio: 1, ext: 'wav', out: '{b} (normalisiert).wav' },
+    { to: 'OPUS', sub: 'ideal für Sprache', ratio: .025, ext: 'opus' },
+    { to: 'FLAC', sub: 'verlustfrei', ratio: .55, ext: 'flac' },
+  ]},
+  DOCX: { def: 0, o: [
+    { to: 'PDF', sub: 'zum Versenden', ratio: .75, ext: 'pdf' },
+    { to: 'Privat', intent: 1, sub: 'Autor, Änderungen weg', ratio: .97, ext: 'docx', out: '{b} (privat).docx' },
+    { to: 'MD', sub: 'Markdown', ratio: .04, ext: 'md' },
+    { to: 'TXT', sub: 'nur Text', ratio: .03, ext: 'txt' },
+    { to: 'HTML', sub: 'Webseite', ratio: .2, ext: 'html' },
+    { to: 'ODT', sub: 'LibreOffice', ratio: .8, ext: 'odt' },
+  ]},
+  CSV: { def: 0, o: [
+    { to: 'XLSX', sub: 'mit Filtern', ratio: .66, ext: 'xlsx' },
+    { to: 'Excel DE', intent: 1, sub: 'Semikolon · UTF-8', ratio: 1.02, ext: 'csv', out: '{b} (Excel DE).csv' },
+    { to: 'JSON', sub: 'für Entwickler', ratio: 1.45, ext: 'json' },
+    { to: 'SQLite', sub: 'Datenbank', ratio: .9, ext: 'sqlite' },
+    { to: 'MD', sub: 'Tabelle', ratio: 1.1, ext: 'md', kind: 'doc' },
+  ]},
+};
+
+// Fallback for files created in the prototype.
+const GEN = {
+  image: [
+    { to: 'JPG', sub: 'überall kompatibel', ratio: .6, ext: 'jpg', q: 1, presets: IMGQ },
+    { to: 'PNG', sub: 'verlustfrei', ratio: 2.5, ext: 'png' },
+    { to: 'WEBP', sub: 'klein, fürs Web', ratio: .4, ext: 'webp', q: 1, presets: IMGQ },
+    { to: 'Mail', intent: 1, sub: 'unter 1 MB', ratio: .3, ext: 'jpg', out: '{b} (Mail).jpg' },
+    { to: 'AVIF', sub: 'kleinste Datei', ratio: .28, ext: 'avif', q: 1, presets: IMGQ },
+  ],
+  video: [
+    { to: 'MP4', sub: 'überall abspielbar', ratio: .9, ext: 'mp4', t: 1500 },
+    { to: 'Mail', intent: 1, sub: 'unter 25 MB', ratio: .08, ext: 'mp4', out: '{b} (Mail).mp4', t: 1800 },
+    { to: 'M4A', sub: 'nur Ton ⚡', ratio: .01, ext: 'm4a', kind: 'audio' },
+    { to: 'GIF', sub: 'Ausschnitt 5 s', ratio: .03, ext: 'gif', kind: 'image', t: 1500 },
+  ],
+  audio: [
+    { to: 'MP3', sub: 'läuft überall', ratio: .8, ext: 'mp3' },
+    { to: 'M4A', sub: 'kleiner', ratio: .6, ext: 'm4a' },
+    { to: 'Transkript', intent: 1, sub: 'lokale KI', ratio: .001, ext: 'txt', kind: 'doc', out: '{b} (Transkript).txt', t: 2400 },
+    { to: 'FLAC', sub: 'verlustfrei', ratio: 3, ext: 'flac' },
+  ],
+  doc: [
+    { to: 'PDF', sub: 'zum Versenden', ratio: 1.4, ext: 'pdf' },
+    { to: 'DOCX', sub: 'Word', ratio: 1.2, ext: 'docx' },
+    { to: 'TXT', sub: 'nur Text', ratio: .2, ext: 'txt' },
+    { to: 'ZIP', sub: 'packen', ratio: .5, ext: 'zip', kind: 'archive' },
+  ],
+  data: [
+    { to: 'XLSX', sub: 'Excel', ratio: .7, ext: 'xlsx' },
+    { to: 'CSV', sub: 'Tabelle', ratio: .8, ext: 'csv' },
+    { to: 'JSON', sub: 'für Entwickler', ratio: 1.4, ext: 'json' },
+  ],
+  folder: [
+    { to: 'ZIP', sub: 'packen', ratio: .7, ext: 'zip', kind: 'archive' },
+    { to: 'PDF', sub: 'zusammenfügen', ratio: .9, ext: 'pdf', kind: 'doc' },
+    { to: '7Z', sub: 'stärker packen', ratio: .55, ext: '7z', kind: 'archive' },
+  ],
+  archive: [
+    { to: 'Entpacken', sub: 'in neuen Ordner', ratio: 1.6, folder: 1, count: 6, out: '{b}' },
+    { to: '7Z', sub: 'stärker packen', ratio: .8, ext: '7z' },
+  ],
+};
+const KIND_OF_EXT = { jpg: 'image', png: 'image', webp: 'image', avif: 'image', heic: 'image', gif: 'image', svg: 'image', ico: 'image',
+  mp4: 'video', mov: 'video', mp3: 'audio', m4a: 'audio', wav: 'audio', flac: 'audio', opus: 'audio',
+  pdf: 'doc', docx: 'doc', odt: 'doc', txt: 'doc', md: 'doc', html: 'doc', srt: 'doc',
+  csv: 'data', xlsx: 'data', json: 'data', sqlite: 'data', zip: 'archive', '7z': 'archive' };
+
+const FILES = [
+  { name: 'logo.png', ext: 'PNG', fmt: 'PNG', kind: 'image', bytes: 1.8 * MB, meta: '1024 × 1024 · Transparenz', thumb: 'logo' },
+  { name: 'IMG_4821.HEIC', ext: 'HEIC', fmt: 'HEIC', kind: 'image', bytes: 3.1 * MB, meta: '4032 × 3024 · iPhone · GPS', thumb: 'photo' },
+  { name: 'Urlaub.mov', ext: 'MOV', fmt: 'MOV', kind: 'video', bytes: 612 * MB, meta: '4K · 1:12 min · H.264', thumb: 'video' },
+  { name: 'Scan_Vertrag.pdf', ext: 'PDF', fmt: 'SCAN', kind: 'doc', bytes: 8.4 * MB, meta: '6 Seiten · Scan ohne Text', thumb: 'scan' },
+  { name: 'Interview.wav', ext: 'WAV', fmt: 'WAV', kind: 'audio', bytes: 480 * MB, meta: '42 min · 48 kHz', thumb: 'audio' },
+  { name: 'Angebot.docx', ext: 'DOCX', fmt: 'DOCX', kind: 'doc', bytes: 240 * KB, meta: '3 Seiten', thumb: 'doc' },
+  { name: 'Kunden.csv', ext: 'CSV', fmt: 'CSV', kind: 'data', bytes: 96 * KB, meta: '1.240 Zeilen · Komma', thumb: 'data' },
+];
+
+const THUMBS = {
+  logo: `<div style="position:absolute;inset:0;background:repeating-conic-gradient(#e4e6ee 0 25%,#fff 0 50%) 0 0/8px 8px"></div>
+    <div style="position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px;border-radius:9px;background:linear-gradient(135deg,#8b5cf6,#ec4899);transform:rotate(12deg)"></div>`,
+  photo: `<div style="position:absolute;inset:0;background:linear-gradient(180deg,#ffb36b,#ff6f91 55%,#6b4fbf)"></div>
+    <div style="position:absolute;left:-10px;right:-10px;bottom:-14px;height:30px;background:#2a2350;border-radius:50% 50% 0 0"></div>
+    <div style="position:absolute;right:10px;top:8px;width:10px;height:10px;border-radius:50%;background:#fff6c9"></div>`,
+  video: `<div style="position:absolute;inset:0;background:linear-gradient(160deg,#0f3d5e,#1f7a8c 60%,#f0b35b)"></div>
+    <div style="position:absolute;left:50%;top:50%;margin:-8px 0 0 -5px;border-left:14px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent;opacity:.9"></div>`,
+  audio: `<svg viewBox="0 0 46 42" style="position:absolute;inset:0;width:100%;height:100%;background:#123a2a">${
+    Array.from({ length: 11 }, (_, i) => { const h = [10, 22, 14, 30, 18, 34, 20, 26, 12, 20, 8][i]; return `<rect x="${3 + i * 4}" y="${21 - h / 2}" width="2.4" height="${h}" rx="1.2" fill="#5be08f"/>`; }).join('')}</svg>`,
+  scan: `<div style="position:absolute;inset:0;background:#e9e4d8;transform:rotate(-2deg) scale(1.1)">${
+    Array.from({ length: 7 }, (_, i) => `<div style="height:2px;margin:${i ? 3 : 6}px 6px 0;background:#8e887c;width:${[80, 70, 85, 60, 75, 50, 65][i]}%"></div>`).join('')}</div>`,
+  doc: `<div style="position:absolute;inset:0;background:#fff">${
+    Array.from({ length: 7 }, (_, i) => `<div style="height:2px;margin:${i ? 3 : 6}px 5px 0;background:${i ? '#c4cee0' : '#3d6fd6'};width:${[55, 85, 80, 88, 70, 84, 40][i]}%"></div>`).join('')}</div>`,
+  data: `<div style="position:absolute;inset:0;background:#fff;background-image:linear-gradient(#d9dee8 1px,transparent 1px),linear-gradient(90deg,#d9dee8 1px,transparent 1px);background-size:100% 7px,11px 100%"><div style="height:7px;background:#ffd84d88"></div></div>`,
+  image: `<div style="position:absolute;inset:0;background:linear-gradient(135deg,#b197fc,#ff8094)"></div>`,
+  archive: `<div style="position:absolute;inset:0;background:repeating-linear-gradient(180deg,#ffb878 0 4px,#fff 4px 8px);width:8px;left:50%;margin-left:-4px"></div>`,
+};
+
+// ---------- Desktop ----------
+const desk = document.getElementById('desk');
+const CW = 104, CH = 120, OX = 20, OY = 46;
+const occupied = new Map();
+let files = [];
+const rows = () => Math.max(3, Math.floor((innerHeight - OY - 70) / CH));
+
+function thumbFor(f) {
+  if (f.kind === 'folder') return '';
+  return THUMBS[f.thumb] ?? THUMBS[f.kind] ?? THUMBS.doc;
+}
+function paperHTML(f) {
+  return `<div class="paper k-${f.kind}"><div class="thumb">${thumbFor(f)}</div><span class="badge">${f.ext}</span>
+    <svg class="prog" viewBox="0 0 74 88"><rect x="2" y="2" width="70" height="84" rx="12"/></svg></div>`;
+}
+function addFile(f, c, r, fresh) {
+  f.c = c; f.r = r; occupied.set(`${c},${r}`, f);
+  const el = document.createElement('div');
+  el.className = 'file' + (fresh ? ' mat' : '');
+  el.style.left = (OX + c * CW) + 'px';
+  el.style.top = (OY + r * CH) + 'px';
+  el.innerHTML = paperHTML(f) + `<div class="fname">${f.name}</div><div class="fmeta">${fmtB(f.bytes)}</div>`;
+  el.addEventListener('pointerdown', e => onDown(e, f));
+  f.el = el; desk.appendChild(el); files.push(f);
+  return f;
+}
+function removeFile(f) {
+  occupied.delete(`${f.c},${f.r}`);
+  files = files.filter(x => x !== f);
+  f.el.classList.add('gone');
+  setTimeout(() => f.el.remove(), 260);
+}
+function freeCellNear(c0, r0) {
+  const R = rows(), maxC = Math.max(2, Math.floor((innerWidth - OX - 380) / CW));
+  let best = null, bd = Infinity;
+  for (let c = 0; c <= maxC; c++) for (let r = 0; r < R; r++) {
+    if (occupied.has(`${c},${r}`)) continue;
+    const d = (c - c0) ** 2 * 1 + (r - r0) ** 2 * 1.4 + (c < c0 ? .5 : 0);
+    if (d < bd) { bd = d; best = [c, r]; }
+  }
+  return best || [c0 + 1, r0];
+}
+FILES.forEach((f, i) => { const R = rows(); addFile({ ...f }, Math.floor(i / R), i % R); });
+
+desk.addEventListener('pointerdown', e => { if (e.target === desk) files.forEach(f => f.el.classList.remove('sel')); });
+document.addEventListener('dragstart', e => e.preventDefault());
+
+// ---------- Helpers ----------
+function fmtB(b) {
+  if (b < MB) return Math.max(1, Math.round(b / KB)).toLocaleString('de-DE') + ' KB';
+  if (b < 1024 * MB) return (b / MB).toLocaleString('de-DE', { maximumFractionDigits: b < 10 * MB ? 1 : 0 }) + ' MB';
+  return (b / 1024 / MB).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' GB';
+}
+const SUMMARY = { to: 'Zusammenfassen', intent: 1, sub: 'lokale KI · Ollama', ratio: .004, ext: 'txt', kind: 'doc', out: '{b} (Zusammenfassung).txt', t: 2600 };
+function optionsFor(f) {
+  const base = baseOptionsFor(f);
+  return f.kind === 'doc' && S.ollama && ollamaOK && S.ai.sum ? { def: base.def, o: [...base.o, SUMMARY] } : base;
+}
+function baseOptionsFor(f) {
+  if (OPTS[f.fmt]) return OPTS[f.fmt];
+  const ext = f.ext.toLowerCase();
+  const o = (GEN[f.kind] || GEN.doc).filter(x => x.intent || x.ext !== ext || x.folder);
+  return { def: 0, o };
+}
+const qf = q => .35 + .65 * Math.pow(q / 80, 2);
+function est(f, o, pm) {
+  const m = pm ?? o.pm ?? 1;
+  return f.bytes * (o.ratio ?? 0) * m * (o.q ? qf(o.qv ?? 80) : 1);
+}
+function delta(f, out) {
+  const p = Math.round((out / f.bytes - 1) * 100);
+  return p < 0 ? { t: `−${-p} %`, up: false } : { t: `+${p} %`, up: true };
+}
+function sizeLine(f, o, pm) {
+  if (o.clip) return '→ Zwischenablage';
+  if (o.folder) return `${o.count} Dateien`;
+  const s = est(f, o, pm);
+  return `${fmtB(s)} · ${delta(f, s).t}`;
+}
+const kindOf = (f, o) => o.intent ? 'intent' : (o.folder ? 'folder' : (o.kind || KIND_OF_EXT[o.ext] || f.kind));
+const colorOf = (f, o) => `var(--${kindOf(f, o) === 'intent' ? f.kind : kindOf(f, o)})`;
+
+let actx;
+function tick(freq = 2300) {
+  if (!document.getElementById('optSound').checked) return;
+  try {
+    actx = actx || new AudioContext();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.frequency.value = freq; g.gain.setValueAtTime(.05, t); g.gain.exponentialRampToValueAtTime(.0001, t + .03);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + .04);
+  } catch (_) {}
+}
+
+// ---------- Drag ----------
+let drag = null;
+const optAuto = document.getElementById('optAuto');
+
+function onDown(e, f) {
+  if (e.button !== 0 || f.el.classList.contains('busy')) return;
+  e.preventDefault();
+  files.forEach(x => x.el.classList.toggle('sel', x === f));
+  drag = { f, sx: e.clientX, sy: e.clientY, x: e.clientX, y: e.clientY, started: false, dir: 0, turnX: e.clientX, lx: e.clientX, turns: [], noAuto: false };
+}
+addEventListener('pointermove', e => {
+  if (!drag) return;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if (!drag.started) {
+    if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 5) return;
+    startDrag();
+  }
+  moveGhost(e.clientX, e.clientY);
+  if (ring) { ringHover(e.clientX, e.clientY); return; }
+  if (notchCheck(e.clientX, e.clientY)) return;
+  if (e.altKey && !drag.noAuto) return openRing(e.clientX, e.clientY);
+  if (optAuto.checked && !drag.noAuto && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 14) return openRing(e.clientX, e.clientY);
+  detectShake(e.clientX);
+});
+addEventListener('pointerup', e => {
+  if (!drag) return;
+  if (drag.started) finishDrag(e);
+  drag = null;
+});
+addEventListener('pointercancel', () => { if (drag?.started) cancelDrag(); drag = null; });
+addEventListener('keydown', e => {
+  if (e.key === 'Alt') { e.preventDefault(); if (drag?.started && !ring && !notchOpen) { drag.noAuto = false; openRing(drag.x, drag.y); } }
+  if (e.key === 'Escape' && ring) { drag && (drag.noAuto = true); closeRing('dismiss'); }
+});
+addEventListener('keyup', e => { if (e.key === 'Alt') e.preventDefault(); });
+
+function detectShake(x) {
+  if (!S.shake) return;
+  const now = performance.now(), dx = x - drag.lx; drag.lx = x;
+  if (Math.abs(dx) < 2) return;
+  const dir = Math.sign(dx);
+  if (drag.dir && dir !== drag.dir) {
+    if (Math.abs(x - drag.turnX) > 16) drag.turns.push(now);
+    drag.turnX = x;
+  }
+  drag.dir = dir;
+  drag.turns = drag.turns.filter(t => now - t < 700);
+  if (drag.turns.length >= 3) { drag.turns = []; drag.noAuto = false; openRing(drag.x, drag.y); }
+}
+
+let ghost = null;
+function startDrag() {
+  drag.started = true;
+  document.body.classList.add('active');
+  drag.f.el.classList.add('dragging');
+  ghost = document.createElement('div');
+  ghost.className = 'ghost';
+  ghost.innerHTML = paperHTML(drag.f) + '<div class="gtag"></div>';
+  ghost.querySelector('.paper').style.setProperty('--k', `var(--${drag.f.kind})`);
+  document.body.appendChild(ghost);
+}
+function moveGhost(x, y) { ghost.style.left = x + 'px'; ghost.style.top = y + 'px'; }
+function ghostAim(o) {
+  ghost.classList.toggle('aim', !!o);
+  if (o) { const t = ghost.querySelector('.gtag'); t.textContent = '→ ' + o.to; t.style.background = colorOf(drag.f, o); }
+}
+function ghostBack(f) {
+  const g = ghost; ghost = null;
+  const r = f.el.querySelector('.paper').getBoundingClientRect();
+  g.classList.add('back'); g.classList.remove('aim');
+  requestAnimationFrame(() => { g.style.left = (r.left + r.width / 2) + 'px'; g.style.top = (r.top + r.height / 2) + 'px'; });
+  setTimeout(() => g.remove(), 380);
+}
+function endVisuals(f) {
+  document.body.classList.remove('active');
+  f.el.classList.remove('dragging');
+}
+function cancelDrag() {
+  const f = drag.f;
+  if (ring) closeRing('dismiss');
+  notchClose();
+  ghostBack(f); endVisuals(f);
+}
+function finishDrag() {
+  const f = drag.f;
+  let pick = null;
+  if (ring && ring.target) {
+    const t = ring.target, set = ring.set;
+    if (t.type === 'center') pick = { o: set.o[set.def] };
+    else if (t.type === 'opt') pick = { o: set.o[t.idx] };
+    else if (t.type === 'pre') pick = { o: set.o[t.idx], pre: t.k };
+  } else if (notchOpen && notchHot != null) {
+    pick = { o: optionsFor(f).o[notchHot] };
+  }
+  if (!pick) return cancelDrag();
+  if (ring) closeRing('closing');
+  notchClose();
+  ghostBack(f); endVisuals(f);
+  convert(f, pick.o, pick.pre);
+}
+
+// ---------- Ring ----------
+const ringEl = document.getElementById('ring'), secsG = document.getElementById('secs'),
+  presG = document.getElementById('pres'), ctrG = document.getElementById('ctr'), cinfo = ringEl.querySelector('.cinfo');
+let ring = null;
+
+const pol = (r, a) => [r * Math.sin(a), -r * Math.cos(a)];
+function arc(r0, r1, a0, a1) {
+  const L = a1 - a0 > Math.PI ? 1 : 0;
+  const [x0, y0] = pol(r1, a0), [x1, y1] = pol(r1, a1), [x2, y2] = pol(r0, a1), [x3, y3] = pol(r0, a0);
+  return `M${x0} ${y0}A${r1} ${r1} 0 ${L} 1 ${x1} ${y1}L${x2} ${y2}A${r0} ${r0} 0 ${L} 0 ${x3} ${y3}Z`;
+}
+const norm = a => ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+function openRing(x, y) {
+  if (ring || !drag) return;
+  const f = drag.f, set = optionsFor(f), n = set.o.length, step = 2 * Math.PI / n;
+  const cx = Math.min(Math.max(x, POUT + 14), innerWidth - POUT - 14);
+  const cy = Math.min(Math.max(y, POUT + 40), innerHeight - POUT - 14);
+  ring = { f, set, cx, cy, step, target: null, presetsFor: -1, timer: 0 };
+  ringEl.className = ''; ringEl.style.left = cx + 'px'; ringEl.style.top = cy + 'px';
+  secsG.innerHTML = ''; presG.innerHTML = '';
+  set.o.forEach((o, i) => {
+    const a = i * step, gap = .022, rm = (RIN + 6 + ROUT) / 2;
+    const [lx, ly] = pol(rm, a), [dx, dy] = pol(ROUT - 9, a);
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'sec' + (o.intent ? ' intent' : ''));
+    g.style.cssText = `--k:${colorOf(f, o)};--ux:${Math.sin(a).toFixed(3)};--uy:${(-Math.cos(a)).toFixed(3)};--d:${i * 28}ms`;
+    g.innerHTML = `<path d="${arc(RIN + 6, ROUT, a - step / 2 + gap, a + step / 2 - gap)}"/>
+      ${i === set.def ? `<circle class="dflt" cx="${dx}" cy="${dy}" r="3"/>` : ''}
+      <text class="n" x="${lx}" y="${ly - 16}">${o.to}</text>
+      <text class="s" x="${lx}" y="${ly + 1}">${o.sub}</text>
+      <text class="z" x="${lx}" y="${ly + 17}">${sizeLine(f, o)}</text>`;
+    secsG.appendChild(g); o._g = g;
+  });
+  ctrG.style.setProperty('--k', colorOf(f, set.o[set.def]));
+  ringEl.classList.add('show');
+  requestAnimationFrame(() => requestAnimationFrame(() => ringEl.classList.add('open')));
+  tick(1500);
+  ringHover(x, y);
+}
+
+function closeRing(mode) {
+  if (!ring) return;
+  clearTimeout(ring.timer);
+  ring = null;
+  if (ghost) ghostAim(null);
+  ringEl.classList.add(mode);
+  setTimeout(() => { if (!ring) ringEl.className = ''; }, 300);
+}
+
+function setTarget(t) {
+  const prev = ring.target, same = prev && t && prev.type === t.type && prev.idx === t.idx && prev.k === t.k;
+  if (same || (!prev && !t)) return;
+  ring.target = t;
+  const set = ring.set;
+  set.o.forEach((o, i) => o._g.classList.toggle('hot', !!t && (t.type === 'opt' || t.type === 'pre') && t.idx === i));
+  ctrG.classList.toggle('hot', !!t && t.type === 'center');
+  presG.querySelectorAll('.pre').forEach((p, k) => p.classList.toggle('hot', !!t && t.type === 'pre' && t.k === k));
+  ghostAim(t ? set.o[t.type === 'center' ? set.def : t.idx] : null);
+  if (t) tick(t.type === 'pre' ? 2800 : 2300);
+  clearTimeout(ring.timer);
+  if (t && t.type === 'opt' && set.o[t.idx].presets && ring.presetsFor !== t.idx) {
+    const idx = t.idx; ring.timer = setTimeout(() => showPresets(idx), 380);
+  }
+  if (t && t.type === 'opt' && ring.presetsFor !== -1 && ring.presetsFor !== t.idx) hidePresets();
+  if (!t || t.type === 'center') hidePresets();
+  renderCenter();
+}
+
+function ringHover(x, y) {
+  const dx = x - ring.cx, dy = y - ring.cy, d = Math.hypot(dx, dy);
+  if (d > POUT + 110) { drag.noAuto = true; closeRing('dismiss'); return; }
+  if (d < RIN) return setTarget({ type: 'center' });
+  if (d > POUT + 30) return setTarget(null);
+  const a = norm(Math.atan2(dx, -dy)), n = ring.set.o.length;
+  const idx = Math.round(a / ring.step) % n;
+  if (ring.presetsFor === idx && d >= PIN - 6) {
+    const np = ring.set.o[idx].presets.length;
+    let rel = norm(a - idx * ring.step + Math.PI) - Math.PI;
+    const k = Math.min(np - 1, Math.max(0, Math.floor((rel + ring.step / 2) / ring.step * np)));
+    return setTarget({ type: 'pre', idx, k });
+  }
+  setTarget({ type: 'opt', idx });
+}
+
+function showPresets(idx) {
+  if (!ring) return;
+  const f = ring.f, o = ring.set.o[idx], a = idx * ring.step, np = o.presets.length, span = ring.step, sub = span / np;
+  ring.presetsFor = idx; presG.innerHTML = '';
+  o.presets.forEach(([label, m], k) => {
+    const a0 = a - span / 2 + k * sub, am = a0 + sub / 2, [lx, ly] = pol((PIN + POUT) / 2, am);
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'pre');
+    g.style.cssText = `--k:${colorOf(f, o)};--d:${k * 40}ms`;
+    g.innerHTML = `<path d="${arc(PIN, POUT, a0 + .012, a0 + sub - .012)}"/>
+      <text x="${lx}" y="${ly - 6}">${label}</text><text class="z" x="${lx}" y="${ly + 9}">${o.folder || o.clip ? '' : fmtB(est(f, o, m))}</text>`;
+    presG.appendChild(g);
+  });
+  tick(1900);
+}
+function hidePresets() { if (!ring) return; ring.presetsFor = -1; presG.innerHTML = ''; }
+
+function renderCenter() {
+  const f = ring.f, set = ring.set, t = ring.target;
+  if (!t || t.type === 'center') {
+    const o = set.o[set.def];
+    cinfo.innerHTML = t
+      ? `<span class="m">Vorschlag</span><span class="big">${o.to}</span><span class="m">${o.sub}</span><span class="g">${sizeLine(f, o)}</span>`
+      : `<b>${f.ext}</b><span class="m">${f.meta}</span><span class="m">${fmtB(f.bytes)}</span><span class="g" style="color:var(--k)">Mitte: ${o.to}</span>`;
+    return;
+  }
+  const o = set.o[t.idx], pm = t.type === 'pre' ? o.presets[t.k][1] : undefined;
+  let line = '';
+  if (o.clip) line = `<span class="m">${o.clip.split(' · ')[0]}</span>`;
+  else if (o.folder) line = `<span class="m">${o.count} Dateien</span>`;
+  else {
+    const s = est(f, o, pm), dl = delta(f, s);
+    line = `<span class="m">${fmtB(f.bytes)} → ${fmtB(s)}</span><span class="g ${dl.up ? 'up' : 'ok'}">${dl.t}</span>`;
+  }
+  const extra = t.type === 'pre' ? `<span class="m">${o.presets[t.k][0]}</span>` : (o.q ? `<span class="m">Qualität ${o.qv ?? 80} % · Rad</span>` : '');
+  cinfo.innerHTML = `<span class="big" style="color:${colorOf(f, o)}">${o.to}</span>${line}${extra}`;
+}
+
+addEventListener('wheel', e => {
+  if (!ring || !ring.target || ring.target.type !== 'opt') return;
+  const o = ring.set.o[ring.target.idx];
+  if (!o.q) return;
+  e.preventDefault();
+  o.qv = Math.min(100, Math.max(10, (o.qv ?? 80) + (e.deltaY < 0 ? 5 : -5)));
+  o._g.querySelector('.z').textContent = sizeLine(ring.f, o);
+  tick(1200 + o.qv * 15);
+  renderCenter();
+}, { passive: false });
+
+// ---------- Notch-Portal ----------
+const notch = document.getElementById('notch'), ntiles = notch.querySelector('.ntiles');
+let notchOpen = false, notchHot = null;
+function notchCheck(x, y) {
+  if (!S.notch) return false;
+  const near = y < 150 && Math.abs(x - innerWidth / 2) < 360;
+  if (!notchOpen && y < 70 && Math.abs(x - innerWidth / 2) < 260) notchShow();
+  if (notchOpen && !near && y > 190) notchClose();
+  if (!notchOpen) return false;
+  const el = document.elementFromPoint(x, y)?.closest('.ntile');
+  const k = el ? +el.dataset.k : null;
+  if (k !== notchHot) {
+    notchHot = k;
+    ntiles.querySelectorAll('.ntile').forEach(t => t.classList.toggle('hot', +t.dataset.k === k));
+    const set = optionsFor(drag.f);
+    ghostAim(k == null ? null : set.o[k]);
+    if (k != null) tick();
+  }
+  return true;
+}
+function notchShow() {
+  const f = drag.f, set = optionsFor(f);
+  ntiles.innerHTML = set.o.map((o, k) =>
+    `<div class="ntile" data-k="${k}" style="--k:${colorOf(f, o)}"><b>${o.to}</b><span>${o.sub}</span><i>${sizeLine(f, o)}</i></div>`).join('');
+  notch.classList.add('open'); notchOpen = true; notchHot = null; tick(1500);
+}
+function notchClose() {
+  notch.classList.remove('open'); notchOpen = false; notchHot = null;
+  if (ghost) ghostAim(null);
+}
+
+// ---------- Konvertierung ----------
+function convert(f, o, pre) {
+  let pm = o.pm ?? 1;
+  if (pre != null) { pm = o.presets[pre][1]; o.pm = pm; }
+  const t = o.t ?? 1100;
+  const base = f.name.replace(/\.[^.]+$/, '');
+  f.el.style.setProperty('--t', t + 'ms');
+  f.el.querySelector('.paper').style.setProperty('--k', colorOf(f, o));
+  requestAnimationFrame(() => f.el.classList.add('busy'));
+  setTimeout(() => {
+    f.el.classList.remove('busy');
+    f.el.querySelector('.paper').style.removeProperty('--k');
+    if (o.clip) return toast({ k: colorOf(f, o), html: `<b>${o.clip}</b>` });
+    const isFolder = !!o.folder;
+    const name = (o.out ?? `{b}.${o.ext}`).replace('{b}', base);
+    const kind = isFolder ? 'folder' : (o.kind || KIND_OF_EXT[o.ext] || f.kind);
+    const ext = isFolder ? `${o.count} DATEIEN` : o.ext.toUpperCase();
+    const bytes = est(f, o, pm);
+    const [c, r] = freeCellNear(f.c + 1, f.r);
+    const nf = addFile({ name, ext, kind, bytes, fmt: isFolder ? 'FOLDER' : ext, meta: '', thumb: kind === f.kind ? f.thumb : kind }, c, r, true);
+    tick(3200);
+    const dl = delta(f, bytes);
+    toast({
+      k: colorOf(f, o),
+      html: `<b>${name}</b><span>${fmtB(bytes)}</span><span class="d ${dl.up ? 'up' : ''}">${dl.t}</span>`,
+      actions: [['Zeigen', () => { nf.el.classList.remove('flash'); void nf.el.offsetWidth; nf.el.classList.add('flash'); }],
+                ['Rückgängig', (tEl) => { removeFile(nf); dismissToast(tEl); }]],
+    });
+  }, t);
+}
+
+function toast({ k, html, actions = [] }) {
+  const el = document.createElement('div');
+  el.className = 'toast'; el.style.setProperty('--k', k);
+  el.innerHTML = `<span class="sw"></span>${html}`;
+  actions.forEach(([label, fn]) => {
+    const b = document.createElement('button'); b.textContent = label;
+    b.addEventListener('click', () => fn(el)); el.appendChild(b);
+  });
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => dismissToast(el), 6000);
+}
+function dismissToast(el) { if (!el.isConnected) return; el.classList.add('out'); setTimeout(() => el.remove(), 300); }
+
+// ---------- Einstellungen ----------
+const DEF = { theme: 'classic', sound: false, auto: false, reduce: false, trigger: 'alt', shake: true, notch: true,
+  store: 'side', folder: '~/Documents/Orbit', scheme: 'name', ollama: false, server: 'http://localhost:11434', model: '',
+  ai: { rename: true, alt: true, sum: true, tr: false, cmd: false } };
+let S = JSON.parse(JSON.stringify(DEF));
+try {
+  const p = JSON.parse(localStorage.getItem('orbit.settings') || 'null');
+  if (p) S = { ...S, ...p, ai: { ...S.ai, ...p.ai } };
+} catch (_) {}
+const saveS = () => { try { localStorage.setItem('orbit.settings', JSON.stringify(S)); } catch (_) {} };
+let ollamaOK = false, ollamaModels = [], ollamaState = 'idle';
+const $ = id => document.getElementById(id);
+const settingsEl = $('settings');
+
+function bindCheck(ids, get, set) {
+  const els = ids.map($);
+  const sync = () => els.forEach(el => { el.checked = !!get(); });
+  els.forEach(el => el.addEventListener('change', () => { set(el.checked); saveS(); sync(); renderApply(); }));
+  sync();
+}
+function renderApply() {
+  document.body.classList.toggle('theme-glass', S.theme === 'glass');
+  document.body.classList.toggle('reduce', !!S.reduce);
+  $('sTheme').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === S.theme));
+  document.querySelectorAll('input[name=store]').forEach(r => { r.checked = r.value === S.store; });
+  $('sFolder').disabled = S.store !== 'custom';
+  $('sFolder').value = S.store === 'custom' ? S.folder : '';
+  $('sFolder').placeholder = S.store === 'custom' ? '' : 'Neben der Quelldatei';
+  renderAI();
+}
+function isLocalHost() {
+  try { return ['localhost', '127.0.0.1', '[::1]', '::1'].includes(new URL(S.server).hostname); } catch (_) { return true; }
+}
+function renderAI() {
+  const on = S.ollama, st = $('sStatus'), sel = $('sModel');
+  $('sServer').disabled = !on; $('sTest').disabled = !on;
+  document.querySelectorAll('.checks input').forEach(c => { c.disabled = !on; });
+  $('sWarn').hidden = isLocalHost();
+  st.className = 'st ' + (ollamaState === 'ok' ? 'ok' : ollamaState === 'bad' ? 'bad' : '');
+  st.textContent = ollamaState === 'ok' ? `Verbunden · ${ollamaModels.length} ${ollamaModels.length === 1 ? 'Modell' : 'Modelle'}`
+    : ollamaState === 'bad' ? 'Nicht erreichbar' : ollamaState === 'busy' ? 'Prüfe ...' : '';
+  $('sInstall').hidden = ollamaState !== 'bad';
+  sel.innerHTML = ollamaOK && ollamaModels.length
+    ? ollamaModels.map(m => `<option>${m.replace(/[<&]/g, '')}</option>`).join('')
+    : '<option value="">Nicht verbunden</option>';
+  sel.disabled = !(on && ollamaOK);
+  if (ollamaOK && ollamaModels.includes(S.model)) sel.value = S.model;
+  else if (ollamaOK && ollamaModels.length) { S.model = ollamaModels[0]; saveS(); }
+}
+async function testOllama() {
+  ollamaState = 'busy'; ollamaOK = false; renderAI();
+  const ac = new AbortController(), to = setTimeout(() => ac.abort(), 2000);
+  try {
+    const r = await fetch(S.server.replace(/\/+$/, '') + '/api/tags', { signal: ac.signal });
+    if (!r.ok) throw new Error('http');
+    const j = await r.json();
+    ollamaModels = (j.models || []).map(m => m.name); ollamaOK = true; ollamaState = 'ok';
+  } catch (_) { ollamaOK = false; ollamaModels = []; ollamaState = 'bad'; }
+  clearTimeout(to);
+  renderAI();
+}
+function openSettings() { settingsEl.classList.add('show'); settingsEl.setAttribute('aria-hidden', 'false'); }
+function closeSettings() { settingsEl.classList.remove('show'); settingsEl.setAttribute('aria-hidden', 'true'); }
+
+bindCheck(['optAuto', 'sAuto'], () => S.auto, v => { S.auto = v; });
+bindCheck(['optSound', 'sSound'], () => S.sound, v => { S.sound = v; });
+bindCheck(['sReduce'], () => S.reduce, v => { S.reduce = v; });
+bindCheck(['sShake'], () => S.shake, v => { S.shake = v; });
+bindCheck(['sNotch'], () => S.notch, v => { S.notch = v; });
+bindCheck(['sOllama'], () => S.ollama, v => { S.ollama = v; });
+[['aiRename', 'rename'], ['aiAlt', 'alt'], ['aiSum', 'sum'], ['aiTr', 'tr'], ['aiCmd', 'cmd']].forEach(([id, k]) =>
+  bindCheck([id], () => S.ai[k], v => { S.ai[k] = v; }));
+$('sTheme').addEventListener('click', e => { const v = e.target.dataset?.v; if (v) { S.theme = v; saveS(); renderApply(); } });
+document.querySelectorAll('input[name=store]').forEach(r => r.addEventListener('change', () => { S.store = r.value; saveS(); renderApply(); }));
+$('sTrigger').value = S.trigger; $('sTrigger').addEventListener('change', e => { S.trigger = e.target.value; saveS(); });
+$('sScheme').value = S.scheme; $('sScheme').addEventListener('change', e => { S.scheme = e.target.value; saveS(); });
+$('sServer').value = S.server;
+$('sServer').addEventListener('input', e => { S.server = e.target.value.trim(); saveS(); ollamaOK = false; ollamaState = 'idle'; renderAI(); });
+$('sModel').addEventListener('change', e => { S.model = e.target.value; saveS(); });
+$('sTest').addEventListener('click', testOllama);
+document.querySelectorAll('.sheet .tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.sheet .tab').forEach(x => x.classList.toggle('on', x === t));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.dataset.pane === t.dataset.tab));
+}));
+$('btnSettings').addEventListener('click', openSettings);
+$('sClose').addEventListener('click', closeSettings);
+settingsEl.addEventListener('pointerdown', e => { if (e.target === settingsEl) closeSettings(); });
+addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === ',') { e.preventDefault(); settingsEl.classList.contains('show') ? closeSettings() : openSettings(); }
+  else if (e.key === 'Escape' && settingsEl.classList.contains('show')) closeSettings();
+});
+renderApply();
+</script>
+</body>
+</html>

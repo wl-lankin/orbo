@@ -1,0 +1,29 @@
+name: core
+on: [push, pull_request]
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: ffmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+      # tauri-build requires the externalBin files to exist; the tests never run them.
+      - name: Sidecar placeholders (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          host=$(rustc -vV | sed -n 's/^host: //p')
+          mkdir -p crates/orbo-app/bin
+          for b in ffmpeg ffprobe; do touch "crates/orbo-app/bin/$b-$host"; done
+      - name: ffmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg -y
+      - run: cargo test --workspace

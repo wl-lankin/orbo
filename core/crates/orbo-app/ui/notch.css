@@ -1,0 +1,50 @@
+html, body { width: 720px; height: 180px; overflow: hidden; background: transparent; }
+
+/* Closed: the hardware notch (200x32). Open: wide panel. Both flush with the top edge. */
+.island { position: absolute; left: 50%; top: 0; width: 200px; height: 32px; margin-left: -100px; background: #000;
+  border-radius: 0 0 14px 14px; overflow: visible;
+  transition: width .5s var(--ease-spring), height .5s var(--ease-spring), margin-left .5s var(--ease-spring), border-radius .5s var(--ease-spring), box-shadow .4s; }
+.island.open { width: 680px; height: 162px; margin-left: -340px; border-radius: 0 0 34px 34px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .05) inset; }
+.style-glass .island.open { box-shadow: 0 18px 40px rgba(0, 0, 0, .45), inset 0 -1px 0 rgba(255, 255, 255, .22), inset 1px 0 0 rgba(255, 255, 255, .1), inset -1px 0 0 rgba(255, 255, 255, .1); }
+/* Concave shoulders where the island meets the screen edge. */
+.island::before, .island::after { content: ""; position: absolute; top: 0; width: 14px; height: 14px; opacity: 0; transition: opacity .2s; }
+.island::before { left: -14px; background: radial-gradient(circle at 0 100%, transparent 13.5px, #000 14px); }
+.island::after { right: -14px; background: radial-gradient(circle at 100% 100%, transparent 13.5px, #000 14px); }
+.island.open::before, .island.open::after { opacity: 1; transition-delay: .12s; }
+
+.head { position: absolute; left: 34px; right: 34px; top: 0; height: 32px; display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; opacity: 0; transition: opacity .2s; }
+.island.open .head { opacity: 1; transition-delay: .18s; }
+.fname { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: #fff; }
+.fhint { color: rgba(255, 255, 255, .55); }
+
+.tiles { position: absolute; left: 18px; right: 18px; top: 38px; bottom: 14px; display: flex; gap: 8px; }
+.tile { --k: var(--document); position: relative; flex: 1 1 0; min-width: 0; padding: 10px 10px 9px; border-radius: 18px; display: flex; flex-direction: column; gap: 3px; overflow: hidden;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--k) 15%, #0d0d12), color-mix(in srgb, var(--k) 7%, #0a0a0e));
+  border: 1px solid color-mix(in srgb, var(--k) 22%, transparent);
+  opacity: 0; transform: translateY(-10px) scale(.88);
+  transition: transform .3s var(--ease-spring), box-shadow .25s, border-color .2s, background .2s, opacity .25s; }
+.island.open .tile { opacity: 1; transform: none; transition-delay: calc(.1s + var(--i) * 45ms), 0s, 0s, 0s, calc(.1s + var(--i) * 45ms); }
+.island.open .tile.hot { transform: translateY(-4px) scale(1.04); transition-delay: 0s; z-index: 2;
+  border-color: var(--k); box-shadow: 0 0 0 1px var(--k), 0 10px 28px -6px var(--k), 0 0 26px -4px var(--k);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--k) 36%, #0d0d12), color-mix(in srgb, var(--k) 16%, #0a0a0e)); }
+.tile .ic { width: 22px; height: 22px; fill: none; stroke: var(--k); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.tile .t { flex: none; margin-top: 2px; font-size: 14px; font-weight: 720; line-height: 1.15; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .s { flex: none; font-size: 10.5px; line-height: 1.25; color: rgba(255, 255, 255, .6); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tile.hot .s { color: rgba(255, 255, 255, .85); }
+.tile .z { flex: none; margin-top: auto; padding-top: 2px; font-size: 11px; font-weight: 650; color: var(--k); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tile.intent, .tile.ai { border-style: dashed; }
+.tile .done { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--k); opacity: 0; transform: scale(.6); pointer-events: none; }
+.tile .done svg { width: 34px; height: 34px; fill: none; stroke: #0a0a0e; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.tiles.committed .tile:not(.picked) { opacity: .25; transition: opacity .2s; }
+.tile.picked { animation: pick .32s var(--ease-spring) both; }
+.tile.picked .done { animation: done .35s var(--ease-spring) .05s both; }
+@keyframes pick { 40% { transform: translateY(-6px) scale(1.1); } }
+@keyframes done { to { opacity: 1; transform: none; } }
+
+.style-glass .tile { background: linear-gradient(180deg, color-mix(in srgb, var(--k) 22%, #1a1a22), color-mix(in srgb, var(--k) 10%, #0d0d12)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22); }
+.empty { margin: auto; color: rgba(255, 255, 255, .55); font-size: 12px; }
+
+/* Sizes and percentages must not jitter while values change. */
+body { font-variant-numeric: tabular-nums; }
+.tile, .tile * { font-family: var(--font-rounded); }

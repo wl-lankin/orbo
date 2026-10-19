@@ -1,0 +1,12 @@
+ring:
+  format:
+    stl: [model_3mf, model_obj, model_glb, model_ply, model_preview]
+    obj: [model_stl, model_glb, model_3mf, model_ply, model_preview]
+    ply: [model_stl, model_obj, model_glb, model_3mf, model_preview]
+    glb: [model_stl, model_obj, model_3mf, model_ply, model_preview]
+    gltf: [model_glb, model_stl, model_obj, model_3mf, model_preview]
+    3mf: [model_stl, model_obj, model_glb, model_ply, model_preview]
+    dae: [model_glb, model_obj, model_stl, model_3mf, model_preview]
+  kind:
+    model: [model_stl, model_obj, model_glb, model_3mf, model_preview]
+rules: []

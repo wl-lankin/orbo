@@ -1,0 +1,55 @@
+targets:
+  - id: model_stl
+    title: STL
+    sub: für 3D-Druck und Slicer
+    output: stl
+    engine: model3d
+    accepts: [obj, ply, glb, gltf, 3mf, dae]
+    group: 3D
+    params: { to: stl }
+
+  - id: model_obj
+    title: OBJ
+    sub: weit verbreitet, auch für Blender
+    output: obj
+    engine: model3d
+    accepts: [stl, ply, glb, gltf, 3mf, dae]
+    group: 3D
+    params: { to: obj }
+
+  - id: model_ply
+    title: PLY
+    sub: Scans und Punktwolken
+    output: ply
+    engine: model3d
+    accepts: [stl, obj, glb, gltf, 3mf, dae]
+    group: 3D
+    params: { to: ply }
+
+  - id: model_glb
+    title: GLB
+    sub: kompakt für Web, AR und Apps
+    output: glb
+    engine: model3d
+    accepts: [stl, obj, ply, gltf, 3mf, dae]
+    group: 3D
+    params: { to: glb }
+
+  - id: model_3mf
+    title: 3MF
+    sub: modernes Format für den 3D-Druck
+    output: 3mf
+    engine: model3d
+    accepts: [stl, obj, ply, glb, gltf, dae]
+    group: 3D
+    params: { to: 3mf }
+
+  - id: model_preview
+    title: Vorschaubild
+    sub: PNG-Bild des Modells
+    output: png
+    engine: model3d
+    accepts: [stl, obj, ply, glb, gltf, 3mf, dae]
+    group: 3D
+    suffix: " (Vorschau)"
+    params: { to: png }

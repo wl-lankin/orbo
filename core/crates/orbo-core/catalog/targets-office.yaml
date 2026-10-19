@@ -1,0 +1,82 @@
+# Presentations and office documents (engine "office").
+# Targets with `requires: [soffice]` need an installed LibreOffice and are hidden without it.
+# params: op = lo (to = pdf|pptx|odp|docx) or pptx_text (to = txt|md)
+
+targets:
+  - id: pptx_txt
+    title: Text
+    sub: Folientexte extrahieren
+    output: txt
+    engine: office
+    accepts: [pptx]
+    group: Präsentation
+    params: { op: pptx_text, to: txt }
+
+  - id: pptx_md
+    title: Markdown
+    sub: Folien als Überschriften und Listen
+    output: md
+    engine: office
+    accepts: [pptx]
+    group: Präsentation
+    params: { op: pptx_text, to: md }
+
+  - id: slides_pdf
+    title: PDF
+    sub: Folien, originalgetreu
+    output: pdf
+    engine: office
+    accepts: [pptx, ppt, odp]
+    requires: [soffice]
+    group: Präsentation
+    params: { op: lo, to: pdf }
+
+  - id: pptx_lo
+    title: PowerPoint
+    sub: für Microsoft PowerPoint
+    output: pptx
+    engine: office
+    accepts: [ppt, odp]
+    requires: [soffice]
+    group: Präsentation
+    params: { op: lo, to: pptx }
+
+  - id: odp_lo
+    title: ODP
+    sub: für LibreOffice Impress
+    output: odp
+    engine: office
+    accepts: [pptx, ppt]
+    requires: [soffice]
+    group: Präsentation
+    params: { op: lo, to: odp }
+
+  - id: docx_lo
+    title: Word
+    sub: mit LibreOffice, originalgetreu
+    output: docx
+    engine: office
+    accepts: [doc, odt]
+    requires: [soffice]
+    group: Office
+    params: { op: lo, to: docx }
+
+  - id: office_pdf_lo
+    title: PDF
+    sub: mit LibreOffice, originalgetreu
+    output: pdf
+    engine: office
+    accepts: [docx, doc, odt, rtf]
+    requires: [soffice]
+    group: Office
+    params: { op: lo, to: pdf }
+
+  - id: sheet_pdf
+    title: PDF
+    sub: Tabelle, originalgetreu
+    output: pdf
+    engine: office
+    accepts: [xlsx, xls, ods]
+    requires: [soffice]
+    group: Office
+    params: { op: lo, to: pdf }

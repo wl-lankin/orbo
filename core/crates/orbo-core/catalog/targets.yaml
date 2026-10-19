@@ -1,0 +1,1094 @@
+# Everything Orbo can produce. The ring shows a few of these (see rules.yaml), the rest is under "Mehr ...".
+#
+# accepts:   kinds (image, video, audio, document, data, archive, folder, other) or format ids (gif, csv ...)
+# requires:  video_stream, audio_stream, animated, ffmpeg, macos, soffice, dwg2dxf, ollama (AI configured and `action` enabled)
+# controls:  what the options dialog offers (quality, resize, crop, aspect, rotate, trim, target_size,
+#            audio_bitrate, sample_rate, channels, fps, background, padding, corners, shadow)
+# dialog:    open the options dialog right after the drop
+# params:    engine-specific, documented at the top of each engine file
+
+targets:
+  # ───────────── Bild: Formate ─────────────
+  - id: jpg
+    title: JPG
+    sub: universell kompatibel
+    output: jpeg
+    engine: image
+    accepts: [image]
+    group: Bild
+    params: { format: jpeg, quality: 85 }
+    presets:
+      - { label: Web, params: { quality: 70 } }
+      - { label: Ausgewogen, params: { quality: 85 } }
+      - { label: Maximal, params: { quality: 95 } }
+    controls: [quality, resize]
+
+  - id: png
+    title: PNG
+    sub: verlustfreie Qualität
+    output: png
+    engine: image
+    accepts: [image]
+    group: Bild
+    params: { format: png }
+    controls: [resize]
+
+  - id: webp
+    title: WEBP
+    sub: kompakt für das Web
+    output: webp
+    engine: image
+    accepts: [image]
+    group: Bild
+    params: { format: webp, quality: 80 }
+    presets:
+      - { label: Web, params: { quality: 65 } }
+      - { label: Ausgewogen, params: { quality: 80 } }
+      - { label: Verlustfrei, params: { lossless: true } }
+    controls: [quality, resize]
+
+  - id: avif
+    title: AVIF
+    sub: maximale Kompression
+    output: avif
+    engine: image
+    accepts: [image]
+    group: Bild
+    params: { format: avif, quality: 60 }
+    presets:
+      - { label: Web, params: { quality: 45 } }
+      - { label: Ausgewogen, params: { quality: 60 } }
+      - { label: Maximal, params: { quality: 85 } }
+    controls: [quality, resize]
+
+  - id: heic
+    title: HEIC
+    sub: platzsparend, Apple
+    output: heic
+    engine: image
+    accepts: [image]
+    requires: [macos]
+    group: Bild
+    params: { format: heic, quality: 80 }
+    controls: [quality, resize]
+
+  - id: gif_image
+    title: GIF
+    sub: 256 Farben
+    output: gif
+    engine: image
+    accepts: [image]
+    group: Bild
+    params: { format: gif }
+
+  - id: bmp
+    title: BMP
+    sub: unkomprimiert
+    output: bmp
+    engine: image
+    accepts: [image]
+    group: Bild (weitere)
+    params: { format: bmp }
+
+  - id: tiff
+    title: TIFF
+    sub: für den Druck
+    output: tiff
+    engine: image
+    accepts: [image]
+    group: Bild (weitere)
+    params: { format: tiff }
+
+  - id: tga
+    title: TGA
+    sub: für Spiel-Engines
+    output: tga
+    engine: image
+    accepts: [image]
+    group: Bild (weitere)
+    params: { format: tga }
+
+  - id: ppm
+    title: PPM
+    sub: einfaches Rohformat
+    output: pnm
+    engine: image
+    accepts: [image]
+    group: Bild (weitere)
+    params: { format: pnm }
+
+  - id: qoi
+    title: QOI
+    sub: schnell und verlustfrei
+    output: qoi
+    engine: image
+    accepts: [image]
+    group: Bild (weitere)
+    params: { format: qoi }
+
+  - id: ico
+    title: ICO
+    sub: Symbol 16 bis 256 px
+    output: ico
+    engine: image
+    accepts: [image]
+    group: Bild
+    params: { format: ico }
+
+  - id: pdf_image
+    title: PDF
+    sub: als PDF-Dokument
+    output: pdf
+    engine: image
+    accepts: [image]
+    group: Bild
+    params: { format: pdf, quality: 90 }
+
+  # ───────────── Bild: Werkzeuge ─────────────
+  - id: compress_image
+    title: Komprimieren
+    sub: Dateigröße reduzieren
+    output: jpeg
+    engine: image
+    accepts: [jpeg, png, webp, avif]
+    same_format: true
+    suffix: " (klein)"
+    group: Bild-Werkzeuge
+    params: { op: compress, quality: 70 }
+    controls: [quality, target_size]
+
+  - id: resize
+    title: Größe ändern
+    sub: Breite und Höhe festlegen
+    output: png
+    engine: image
+    accepts: [image]
+    same_format: true
+    dialog: true
+    suffix: " (Größe)"
+    group: Bild-Werkzeuge
+    params: { op: resize, keep_format: true, max_edge: 1920 }
+    controls: [resize, quality]
+
+  - id: half_size
+    title: 50 %
+    sub: halbe Kantenlänge
+    output: png
+    engine: image
+    accepts: [image]
+    same_format: true
+    suffix: " (50 %)"
+    group: Bild-Werkzeuge
+    params: { op: resize, keep_format: true, percent: 50 }
+
+  - id: crop
+    title: Zuschneiden
+    sub: Bildausschnitt wählen
+    output: png
+    engine: image
+    accepts: [image]
+    same_format: true
+    dialog: true
+    suffix: " (Ausschnitt)"
+    group: Bild-Werkzeuge
+    params: { op: crop, keep_format: true }
+    controls: [crop, aspect]
+
+  - id: square
+    title: Quadrat
+    sub: 1:1, zentriert
+    output: png
+    engine: image
+    accepts: [image]
+    same_format: true
+    suffix: " (1x1)"
+    group: Bild-Werkzeuge
+    params: { op: crop, keep_format: true, aspect: "1:1" }
+
+  - id: rotate_right
+    title: Drehen ↻
+    sub: 90° im Uhrzeigersinn
+    output: png
+    engine: image
+    accepts: [image]
+    same_format: true
+    suffix: " (gedreht)"
+    group: Bild-Werkzeuge
+    params: { op: rotate, degrees: 90, keep_format: true }
+
+  - id: rotate_left
+    title: Drehen ↺
+    sub: 90° nach links
+    output: png
+    engine: image
+    accepts: [image]
+    same_format: true
+    suffix: " (gedreht)"
+    group: Bild-Werkzeuge
+    params: { op: rotate, degrees: 270, keep_format: true }
+
+  - id: flip
+    title: Spiegeln
+    sub: horizontal
+    output: png
+    engine: image
+    accepts: [image]
+    same_format: true
+    suffix: " (gespiegelt)"
+    group: Bild-Werkzeuge
+    params: { op: flip, keep_format: true }
+
+  - id: grayscale
+    title: Graustufen
+    sub: Schwarzweiß-Umwandlung
+    output: png
+    engine: image
+    accepts: [image]
+    same_format: true
+    suffix: " (SW)"
+    group: Bild-Werkzeuge
+    params: { op: grayscale, keep_format: true }
+
+  - id: beautify
+    title: Präsentation
+    sub: Hintergrund, Rand, Schatten
+    output: png
+    engine: image
+    accepts: [image]
+    same_format: true
+    dialog: true
+    suffix: " (schick)"
+    group: Bild-Werkzeuge
+    params: { op: beautify, background: sunset, padding_px: 96, corner_px: 24, shadow_px: 24 }
+    controls: [background, padding, corners, shadow, aspect]
+
+  - id: strip_meta
+    title: Privat
+    sub: Metadaten entfernen
+    output: jpeg
+    engine: image
+    accepts: [jpeg, png, webp, heic, tiff]
+    intent: true
+    same_format: true
+    suffix: " (privat)"
+    group: Für ...
+    params: { op: strip_metadata, keep_format: true }
+
+  - id: web_image
+    title: Web
+    sub: 1920 px · WEBP
+    output: webp
+    engine: image
+    accepts: [image]
+    intent: true
+    suffix: " (Web)"
+    group: Für ...
+    params: { format: webp, quality: 80, max_edge: 1920 }
+
+  - id: mail_image
+    title: E-Mail
+    sub: 1600 px · JPG
+    output: jpeg
+    engine: image
+    accepts: [image]
+    intent: true
+    suffix: " (Mail)"
+    group: Für ...
+    params: { format: jpeg, quality: 80, max_edge: 1600 }
+
+  - id: instagram_image
+    title: Instagram
+    sub: 1080 × 1350 · JPG
+    output: jpeg
+    engine: image
+    accepts: [image]
+    intent: true
+    suffix: " (Instagram)"
+    group: Für ...
+    params: { format: jpeg, quality: 90, op: crop, aspect: "4:5", max_edge: 1350 }
+
+  # ───────────── Animiertes GIF ─────────────
+  - id: gif_to_mp4
+    title: MP4
+    sub: bis zu 90 % kleiner
+    output: mp4
+    engine: media
+    accepts: [gif, webp, png]
+    requires: [animated, ffmpeg]
+    group: Video
+    params: { container: mp4, video: h264, audio: none }
+
+  - id: gif_to_webm
+    title: WEBM
+    sub: für das Web
+    output: webm
+    engine: media
+    accepts: [gif, webp, png]
+    requires: [animated, ffmpeg]
+    group: Video
+    params: { container: webm, video: vp9, audio: none }
+
+  # ───────────── Video: Formate ─────────────
+  - id: mp4
+    title: MP4
+    sub: universell abspielbar
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg]
+    group: Video
+    params: { container: mp4, video: h264, audio: aac, remux_if_possible: true }
+    presets:
+      - { label: Original, params: {} }
+      - { label: 1080p, params: { max_height: 1080 } }
+      - { label: 720p, params: { max_height: 720 } }
+    controls: [quality, resize, trim]
+
+  - id: mp4_hevc
+    title: HEVC
+    sub: halbe Dateigröße
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg]
+    same_format: true
+    suffix: " (HEVC)"
+    group: Video
+    params: { container: mp4, video: hevc, audio: aac }
+    controls: [quality, resize, trim]
+
+  - id: mov
+    title: MOV
+    sub: für Apple-Geräte
+    output: mov
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg]
+    group: Video
+    params: { container: mov, video: h264, audio: aac, remux_if_possible: true }
+    controls: [quality, resize, trim]
+
+  - id: mkv
+    title: MKV
+    sub: ohne Neukodierung
+    output: mkv
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg]
+    group: Video
+    params: { container: mkv, video: copy, audio: copy }
+
+  - id: webm
+    title: WEBM
+    sub: für das Web
+    output: webm
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg]
+    group: Video
+    params: { container: webm, video: vp9, audio: opus }
+    controls: [quality, resize, trim]
+
+  - id: avi
+    title: AVI
+    sub: für ältere Geräte
+    output: avi
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg]
+    group: Video (weitere)
+    params: { container: avi, video: mpeg4, audio: mp3 }
+
+  - id: prores
+    title: ProRes
+    sub: für den Videoschnitt
+    output: mov
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg]
+    same_format: true
+    suffix: " (ProRes)"
+    group: Video (weitere)
+    params: { container: mov, video: prores, audio: pcm }
+
+  - id: gif_video
+    title: GIF
+    sub: Ausschnitt, 6 Sekunden
+    output: gif
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    group: Video
+    params: { op: gif, max_width: 480, fps: 12, clip_s: 6 }
+    presets:
+      - { label: Klein, params: { max_width: 320, fps: 10 } }
+      - { label: Mittel, params: { max_width: 480, fps: 12 } }
+      - { label: Groß, params: { max_width: 720, fps: 15 } }
+    controls: [trim, fps, resize]
+
+  - id: poster
+    title: Standbild
+    sub: bestes Einzelbild als JPG
+    output: jpeg
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    group: Video-Werkzeuge
+    params: { op: poster }
+
+  - id: frames
+    title: Einzelbilder
+    sub: ein Bild pro Sekunde
+    output: folder
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    suffix: " (Bilder)"
+    group: Video-Werkzeuge
+    params: { op: frames, every_s: 1 }
+
+  # ───────────── Video: Werkzeuge ─────────────
+  - id: compress_video
+    title: Komprimieren
+    sub: kleiner, gleiche Auflösung
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    same_format: true
+    suffix: " (klein)"
+    group: Video-Werkzeuge
+    params: { container: mp4, video: h264, audio: aac, quality: 55 }
+    presets:
+      - { label: Leicht, params: { quality: 70 } }
+      - { label: Mittel, params: { quality: 55 } }
+      - { label: Stark, params: { quality: 40, max_height: 720 } }
+    controls: [quality, target_size, resize]
+
+  - id: p1080
+    title: 1080p
+    sub: Full HD
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    same_format: true
+    suffix: " (1080p)"
+    group: Video-Werkzeuge
+    params: { container: mp4, video: h264, audio: aac, max_height: 1080 }
+
+  - id: p720
+    title: 720p
+    sub: HD, kompakt
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    same_format: true
+    suffix: " (720p)"
+    group: Video-Werkzeuge
+    params: { container: mp4, video: h264, audio: aac, max_height: 720 }
+
+  - id: trim_video
+    title: Kürzen
+    sub: Anfang und Ende festlegen
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg]
+    same_format: true
+    dialog: true
+    suffix: " (gekürzt)"
+    group: Video-Werkzeuge
+    params: { container: keep, video: copy, audio: copy, op: trim }
+    controls: [trim]
+
+  - id: mute
+    title: Stumm schalten
+    sub: Tonspur entfernen ⚡
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, audio_stream, video_stream]
+    same_format: true
+    suffix: " (stumm)"
+    group: Video-Werkzeuge
+    params: { container: keep, video: copy, audio: none }
+
+  - id: rotate_video
+    title: Drehen ↻
+    sub: 90° rechts
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    same_format: true
+    suffix: " (gedreht)"
+    group: Video-Werkzeuge
+    params: { container: mp4, video: h264, audio: copy, rotate: 90 }
+
+  - id: reel
+    title: Reel
+    sub: 9:16, Hochformat
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    intent: true
+    suffix: " (9x16)"
+    group: Für ...
+    params: { container: mp4, video: h264, audio: aac, aspect: "9:16", max_height: 1920 }
+
+  - id: mail_video
+    title: E-Mail
+    sub: unter 25 MB
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    intent: true
+    suffix: " (Mail)"
+    group: Für ...
+    params: { container: mp4, video: h264, audio: aac, target_mb: 24, max_height: 720 }
+
+  - id: whatsapp_video
+    title: WhatsApp
+    sub: unter 16 MB
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    intent: true
+    suffix: " (WhatsApp)"
+    group: Für ...
+    params: { container: mp4, video: h264, audio: aac, target_mb: 15, max_height: 720 }
+
+  - id: discord_video
+    title: Discord
+    sub: unter 10 MB
+    output: mp4
+    engine: media
+    accepts: [video]
+    requires: [ffmpeg, video_stream]
+    intent: true
+    suffix: " (Discord)"
+    group: Für ...
+    params: { container: mp4, video: h264, audio: aac, target_mb: 9.5, max_height: 720 }
+
+  # ───────────── Audio: Formate (auch aus Video) ─────────────
+  - id: mp3
+    title: MP3
+    sub: universell abspielbar
+    output: mp3
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    group: Audio
+    params: { container: mp3, video: none, audio: mp3, audio_bitrate_k: 192 }
+    presets:
+      - { label: 128k, params: { audio_bitrate_k: 128 } }
+      - { label: 192k, params: { audio_bitrate_k: 192 } }
+      - { label: 320k, params: { audio_bitrate_k: 320 } }
+    controls: [audio_bitrate, trim, sample_rate, channels]
+
+  - id: m4a
+    title: M4A
+    sub: AAC, kompakt
+    output: m4a
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    group: Audio
+    params: { container: m4a, video: none, audio: aac, audio_bitrate_k: 192, remux_if_possible: true }
+    controls: [audio_bitrate, trim, sample_rate, channels]
+
+  - id: wav
+    title: WAV
+    sub: unkomprimiert
+    output: wav
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    group: Audio
+    params: { container: wav, video: none, audio: pcm }
+    controls: [trim, sample_rate, channels]
+
+  - id: flac
+    title: FLAC
+    sub: verlustfrei, kompakt
+    output: flac
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    group: Audio
+    params: { container: flac, video: none, audio: flac }
+    controls: [trim, sample_rate, channels]
+
+  - id: alac
+    title: ALAC
+    sub: verlustfrei, Apple
+    output: m4a
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    same_format: true
+    suffix: " (ALAC)"
+    group: Audio
+    params: { container: m4a, video: none, audio: alac }
+
+  - id: aiff
+    title: AIFF
+    sub: unkomprimiert, Apple
+    output: aiff
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    group: Audio (weitere)
+    params: { container: aiff, video: none, audio: pcm_be }
+
+  - id: aac
+    title: AAC
+    sub: reiner AAC-Datenstrom
+    output: aac
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    group: Audio (weitere)
+    params: { container: adts, video: none, audio: aac, audio_bitrate_k: 192 }
+
+  - id: ogg
+    title: OGG
+    sub: Vorbis, lizenzfrei
+    output: ogg
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    group: Audio (weitere)
+    params: { container: ogg, video: none, audio: vorbis, audio_bitrate_k: 192 }
+
+  - id: opus
+    title: OPUS
+    sub: optimal für Sprache
+    output: opus
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    group: Audio
+    params: { container: opus, video: none, audio: opus, audio_bitrate_k: 96 }
+
+  - id: wma
+    title: WMA
+    sub: Windows Media
+    output: wma
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    group: Audio (weitere)
+    params: { container: asf, video: none, audio: wma, audio_bitrate_k: 192 }
+
+  - id: ringtone
+    title: Klingelton
+    sub: für iPhone, 30 Sekunden
+    output: m4a
+    ext: m4r
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    intent: true
+    group: Für ...
+    params: { container: ipod, video: none, audio: aac, audio_bitrate_k: 192, clip_s: 30 }
+    controls: [trim]
+
+  # ───────────── Audio: Werkzeuge ─────────────
+  - id: loudnorm
+    title: Lautheit
+    sub: normalisieren (EBU R128)
+    output: mp3
+    engine: media
+    accepts: [audio]
+    requires: [ffmpeg]
+    same_format: true
+    suffix: " (normalisiert)"
+    group: Audio-Werkzeuge
+    params: { container: keep, video: none, audio: keep, filter: loudnorm }
+
+  - id: louder
+    title: Lauter
+    sub: Pegel +6 dB
+    output: mp3
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg, audio_stream]
+    same_format: true
+    suffix: " (lauter)"
+    group: Audio-Werkzeuge
+    params: { container: keep, video: copy, audio: keep, volume_db: 6 }
+
+  - id: trim_audio
+    title: Kürzen
+    sub: Anfang und Ende festlegen
+    output: mp3
+    engine: media
+    accepts: [audio]
+    requires: [ffmpeg]
+    same_format: true
+    dialog: true
+    suffix: " (gekürzt)"
+    group: Audio-Werkzeuge
+    params: { container: keep, video: none, audio: copy, op: trim }
+    controls: [trim]
+
+  - id: mono
+    title: Mono
+    sub: ein Kanal, halbe Größe
+    output: mp3
+    engine: media
+    accepts: [audio]
+    requires: [ffmpeg]
+    same_format: true
+    suffix: " (Mono)"
+    group: Audio-Werkzeuge
+    params: { container: keep, video: none, audio: keep, channels: 1 }
+
+  - id: faster
+    title: 1,5× schneller
+    sub: Tonhöhe bleibt erhalten
+    output: mp4
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg]
+    same_format: true
+    suffix: " (1,5x)"
+    group: Audio-Werkzeuge
+    params: { container: keep, video: keep, audio: keep, speed: 1.5 }
+
+  - id: slower
+    title: 0,5× langsamer
+    sub: Zeitlupe
+    output: mp4
+    engine: media
+    accepts: [audio, video]
+    requires: [ffmpeg]
+    same_format: true
+    suffix: " (0,5x)"
+    group: Audio-Werkzeuge
+    params: { container: keep, video: keep, audio: keep, speed: 0.5 }
+
+  # ───────────── Daten ─────────────
+  - id: xlsx
+    title: Excel
+    sub: mit Filterfunktion
+    output: xlsx
+    engine: data
+    accepts: [csv, tsv, json, ods, xls]
+    group: Daten
+    params: { to: xlsx }
+
+  - id: csv
+    title: CSV
+    sub: Tabelle als Text
+    output: csv
+    engine: data
+    accepts: [xlsx, xls, ods, json, tsv]
+    group: Daten
+    params: { to: csv }
+
+  - id: csv_excel_de
+    title: Excel (DE)
+    sub: Semikolon, UTF-8
+    output: csv
+    engine: data
+    accepts: [csv, tsv, xlsx, xls, ods, json]
+    intent: true
+    same_format: true
+    suffix: " (Excel DE)"
+    group: Für ...
+    params: { to: csv, excel_de: true }
+
+  - id: tsv
+    title: TSV
+    sub: tabulatorgetrennt
+    output: tsv
+    engine: data
+    accepts: [csv, xlsx, xls, ods, json]
+    group: Daten (weitere)
+    params: { to: tsv }
+
+  - id: json
+    title: JSON
+    sub: für Entwickler
+    output: json
+    engine: data
+    accepts: [csv, tsv, xlsx, xls, ods, yaml, toml]
+    group: Daten
+    params: { to: json }
+
+  - id: json_pretty
+    title: Formatieren
+    sub: lesbar formatieren
+    output: json
+    engine: data
+    accepts: [json]
+    same_format: true
+    suffix: " (formatiert)"
+    group: Daten
+    params: { to: json, pretty: true }
+
+  - id: json_minify
+    title: Minimieren
+    sub: Leerzeichen entfernen
+    output: json
+    engine: data
+    accepts: [json]
+    same_format: true
+    suffix: " (min)"
+    group: Daten
+    params: { to: json, minify: true }
+
+  - id: yaml
+    title: YAML
+    sub: Konfiguration
+    output: yaml
+    engine: data
+    accepts: [json, toml]
+    group: Daten
+    params: { to: yaml }
+
+  - id: toml
+    title: TOML
+    sub: Konfiguration
+    output: toml
+    engine: data
+    accepts: [json, yaml]
+    group: Daten (weitere)
+    params: { to: toml }
+
+  - id: md_table
+    title: Markdown
+    sub: Tabelle für Dokumentation
+    output: md
+    engine: data
+    accepts: [csv, tsv, xlsx, xls, ods, json]
+    group: Daten
+    params: { to: md }
+
+  - id: html_table
+    title: HTML
+    sub: Tabelle für das Web
+    output: html
+    engine: data
+    accepts: [csv, tsv, xlsx, xls, ods, json]
+    group: Daten (weitere)
+    params: { to: html }
+
+  - id: vtt
+    title: VTT
+    sub: Untertitel für das Web
+    output: vtt
+    engine: data
+    accepts: [srt]
+    group: Untertitel
+    params: { to: vtt }
+
+  - id: srt
+    title: SRT
+    sub: Untertitel, universell
+    output: srt
+    engine: data
+    accepts: [vtt]
+    group: Untertitel
+    params: { to: srt }
+
+  # ───────────── Dokumente ─────────────
+  - id: pdf_txt
+    title: Text
+    sub: Text extrahieren
+    output: txt
+    engine: document
+    accepts: [pdf]
+    group: Dokument
+    params: { op: pdf_txt }
+
+  - id: pdf_jpg
+    title: Seiten als JPG
+    sub: eine Datei pro Seite
+    output: folder
+    engine: document
+    accepts: [pdf]
+    suffix: " (Seiten)"
+    group: PDF-Werkzeuge
+    params: { op: pdf_images, format: jpg }
+
+  - id: pdf_png
+    title: Seiten als PNG
+    sub: verlustfrei, pro Seite
+    output: folder
+    engine: document
+    accepts: [pdf]
+    suffix: " (Seiten)"
+    group: PDF-Werkzeuge
+    params: { op: pdf_images, format: png }
+
+  - id: pdf_split
+    title: Aufteilen
+    sub: eine PDF pro Seite
+    output: folder
+    engine: document
+    accepts: [pdf]
+    suffix: " (Seiten)"
+    group: PDF-Werkzeuge
+    params: { op: pdf_split }
+
+  - id: pdf_rotate
+    title: Drehen ↻
+    sub: 90° im Uhrzeigersinn
+    output: pdf
+    engine: document
+    accepts: [pdf]
+    same_format: true
+    suffix: " (gedreht)"
+    group: PDF-Werkzeuge
+    params: { op: pdf_rotate }
+
+  - id: pdf_strip
+    title: Privat
+    sub: Metadaten entfernen
+    output: pdf
+    engine: document
+    accepts: [pdf]
+    intent: true
+    same_format: true
+    suffix: " (privat)"
+    group: PDF-Werkzeuge
+    params: { op: pdf_strip }
+
+  - id: pdf_compress
+    title: Komprimieren
+    sub: Dateigröße reduzieren
+    output: pdf
+    engine: document
+    accepts: [pdf]
+    same_format: true
+    suffix: " (klein)"
+    group: PDF-Werkzeuge
+    params: { op: pdf_compress }
+
+  - id: docx
+    title: Word
+    sub: für Microsoft Word
+    output: docx
+    engine: document
+    accepts: [txt, md, html, rtf, doc, odt]
+    requires: [macos]
+    group: Dokument
+    params: { op: convert, to: docx }
+
+  - id: odt
+    title: ODT
+    sub: für LibreOffice
+    output: odt
+    engine: document
+    accepts: [txt, md, html, rtf, doc, docx]
+    requires: [macos]
+    group: Dokument
+    params: { op: convert, to: odt }
+
+  - id: rtf
+    title: RTF
+    sub: universell lesbar
+    output: rtf
+    engine: document
+    accepts: [txt, md, html, doc, docx, odt]
+    requires: [macos]
+    group: Dokument
+    params: { op: convert, to: rtf }
+
+  - id: html_doc
+    title: HTML
+    sub: als Webseite
+    output: html
+    engine: document
+    accepts: [txt, md, rtf, doc, docx, odt]
+    requires: [macos]
+    group: Dokument
+    params: { op: convert, to: html }
+
+  - id: txt
+    title: Text
+    sub: ohne Formatierung
+    output: txt
+    engine: document
+    accepts: [md, html, rtf, doc, docx, odt]
+    requires: [macos]
+    group: Dokument
+    params: { op: convert, to: txt }
+
+  - id: md
+    title: Markdown
+    sub: Text mit Auszeichnung
+    output: md
+    engine: document
+    accepts: [txt, html, rtf, doc, docx, odt]
+    requires: [macos]
+    group: Dokument
+    params: { op: convert, to: md }
+
+  - id: doc_pdf
+    title: PDF
+    sub: zum Versenden
+    output: pdf
+    engine: document
+    accepts: [txt, md]
+    group: Dokument
+    params: { op: to_pdf }
+
+  - id: office_pdf
+    title: PDF
+    sub: einfaches Layout
+    output: pdf
+    engine: document
+    accepts: [html, rtf, doc, docx, odt]
+    requires: [macos]
+    group: Dokument
+    params: { op: to_pdf }
+
+  # ───────────── Archive ─────────────
+  - id: zip
+    title: ZIP
+    sub: Archiv erstellen
+    output: zip
+    engine: archive
+    accepts: [image, video, audio, document, data, folder, other]
+    group: Archiv
+    params: { op: pack, format: zip }
+
+  - id: tar_gz
+    title: TAR.GZ
+    sub: Archiv für Unix
+    output: tgz
+    engine: archive
+    accepts: [image, video, audio, document, data, folder, other]
+    group: Archiv
+    params: { op: pack, format: tgz }
+
+  - id: unpack
+    title: Entpacken
+    sub: in neuen Ordner
+    output: folder
+    engine: archive
+    accepts: [zip, tar, tgz, gz]
+    group: Archiv
+    params: { op: unpack }
+    presets:
+      - { label: Neuer Ordner, params: {} }
+      - { label: Hier entpacken, params: { into: here } }
+      - { label: Ordner wählen …, params: { pick_folder: true } }
+
+  - id: repack_zip
+    title: Als ZIP
+    sub: Archiv umwandeln
+    output: zip
+    engine: archive
+    accepts: [tar, tgz]
+    group: Archiv
+    params: { op: repack, format: zip }

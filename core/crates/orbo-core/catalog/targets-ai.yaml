@@ -1,0 +1,56 @@
+# Optional local AI through Ollama. Hidden unless the AI is configured and the action (param `action`) is switched on.
+# See engines/ai.rs. Results are new files; the original is never changed.
+targets:
+  - id: ai_rename
+    title: Sinnvoll umbenennen
+    sub: KI-Name als Kopie
+    output: txt
+    engine: ai
+    accepts: [image, pdf, txt, md, docx, html, epub]
+    requires: [ollama]
+    ai: true
+    same_format: true
+    group: KI
+    params: { action: rename, keep_format: true }
+
+  - id: ai_alt_text
+    title: Bildbeschreibung
+    sub: Alt-Text als Textdatei
+    output: txt
+    engine: ai
+    accepts: [image]
+    requires: [ollama]
+    ai: true
+    suffix: " (Beschreibung)"
+    group: KI
+    params: { action: alt_text }
+
+  - id: ai_summary
+    title: Zusammenfassen
+    sub: Kernpunkte als Markdown
+    output: md
+    engine: ai
+    accepts: [pdf, txt, md, docx, html, epub]
+    requires: [ollama]
+    ai: true
+    suffix: " (Zusammenfassung)"
+    group: KI
+    params: { action: summary }
+
+  - id: ai_translate
+    title: Übersetzen
+    sub: Text und Untertitel
+    output: txt
+    engine: ai
+    accepts: [txt, md, srt, vtt]
+    requires: [ollama]
+    ai: true
+    same_format: true
+    group: KI
+    params: { action: translate, lang: Englisch, keep_format: true }
+    presets:
+      - { label: Englisch, params: { lang: Englisch } }
+      - { label: Deutsch, params: { lang: Deutsch } }
+      - { label: Französisch, params: { lang: Französisch } }
+      - { label: Spanisch, params: { lang: Spanisch } }
+      - { label: Italienisch, params: { lang: Italienisch } }

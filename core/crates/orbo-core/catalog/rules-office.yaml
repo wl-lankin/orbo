@@ -1,0 +1,10 @@
+ring:
+  format:
+    pptx: [slides_pdf, pptx_txt, pptx_md, odp_lo]
+    ppt: [slides_pdf, pptx_lo, odp_lo]
+    odp: [slides_pdf, pptx_lo]
+  kind: {}
+rules:
+  - why: Mit LibreOffice wird das Layout von Office-Dokumenten originalgetreu übernommen
+    when: { format: [docx, doc, odt, rtf] }
+    add: [office_pdf_lo]

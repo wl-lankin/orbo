@@ -1,0 +1,46 @@
+targets:
+  - id: font_ttf
+    title: TTF
+    sub: Schrift zur Installation
+    output: ttf
+    engine: font
+    accepts: [woff, woff2]
+    group: Schrift
+    params: { to: ttf }
+
+  - id: font_otf
+    title: OTF
+    sub: Schrift mit PostScript-Konturen
+    output: otf
+    engine: font
+    accepts: [woff, woff2]
+    group: Schrift
+    params: { to: otf }
+
+  - id: font_woff
+    title: WOFF
+    sub: Webschrift, breit unterstützt
+    output: woff
+    engine: font
+    accepts: [ttf, otf, woff2]
+    group: Schrift
+    params: { to: woff }
+
+  - id: font_woff2
+    title: WOFF2
+    sub: Webschrift, besonders klein
+    output: woff2
+    engine: font
+    accepts: [ttf, otf, woff]
+    group: Schrift
+    params: { to: woff2 }
+
+  - id: font_specimen
+    title: Schriftprobe
+    sub: PNG mit Beispieltext in mehreren Größen
+    output: png
+    engine: font
+    accepts: [ttf, otf, woff, woff2]
+    group: Schrift
+    suffix: " (Schriftprobe)"
+    params: { to: png }

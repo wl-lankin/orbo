@@ -1,0 +1,88 @@
+html, body { position: relative; width: 460px; height: 260px; overflow: hidden; background: transparent; }
+#stack { position: absolute; left: 0; right: 0; bottom: 0; top: 0; padding: 10px 14px 16px; display: flex; flex-direction: column;
+  justify-content: flex-end; overflow: hidden; }
+
+.style-classic {
+  --card-bg: linear-gradient(180deg, rgba(36, 39, 64, .97), rgba(22, 24, 42, .97));
+  --card-edge: rgba(255, 255, 255, .12);
+  --card-shadow: 0 10px 26px rgba(0, 0, 0, .42), 0 1px 0 rgba(255, 255, 255, .06) inset;
+  --btn: rgba(255, 255, 255, .09); --btn-hot: rgba(255, 255, 255, .17); --btn-edge: rgba(255, 255, 255, .0);
+  --trk: rgba(255, 255, 255, .12);
+}
+.style-glass {
+  --card-bg: linear-gradient(180deg, rgba(255, 255, 255, .26), rgba(255, 255, 255, .08)), linear-gradient(rgba(40, 46, 118, .66), rgba(54, 40, 112, .66));
+  --card-edge: rgba(255, 255, 255, .38);
+  --card-shadow: 0 10px 26px rgba(10, 12, 50, .38), inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -1px 0 rgba(255, 255, 255, .1);
+  --btn: rgba(255, 255, 255, .18); --btn-hot: rgba(255, 255, 255, .3); --btn-edge: rgba(255, 255, 255, .3);
+  --trk: rgba(255, 255, 255, .22);
+}
+
+.wrap { overflow: hidden; margin-top: 8px; flex: none; transition: height .3s var(--ease-out), margin-top .3s var(--ease-out), opacity .24s; }
+.wrap:first-child { margin-top: 0; }
+.wrap.out { opacity: 0; }
+
+.card { --kz: var(--k); position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; column-gap: 12px;
+  padding: 11px 12px; border-radius: 16px; background: var(--card-bg); border: 1px solid var(--card-edge); box-shadow: var(--card-shadow);
+  backdrop-filter: blur(24px) saturate(1.6); -webkit-backdrop-filter: blur(24px) saturate(1.6); overflow: hidden;
+  animation: cardIn .42s var(--ease-spring) both; }
+.style-glass .card { --kz: color-mix(in srgb, var(--k) 45%, #fff); border-radius: 20px; }
+.style-glass .card, .style-glass .card * { text-shadow: 0 1px 2px rgba(0, 0, 0, .3); }
+@keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(.94); } to { opacity: 1; transform: none; } }
+
+.ico { position: relative; width: 40px; height: 40px; display: grid; place-items: center; border: 0; padding: 0; background: none; color: inherit; font: inherit; cursor: default; }
+.ico .pr { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.pr circle { fill: none; stroke-width: 3; }
+.pr .trk { stroke: var(--trk); }
+.pr .arc { stroke: var(--kz); stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 75; transition: stroke-dashoffset .3s linear, stroke .3s; }
+.card.indet .pr .arc { stroke-dashoffset: 72; animation: spin 1s linear infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ico .g { position: relative; width: 16px; height: 16px; fill: none; stroke: var(--kz); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: opacity .15s, transform .2s var(--ease-spring); }
+.ico .g.alt { position: absolute; opacity: 0; transform: scale(.6); stroke: var(--txt); }
+.card.running .ico { cursor: pointer; }
+.card.running .ico:hover .g.main { opacity: 0; transform: scale(.6); }
+.card.running .ico:hover .g.alt { opacity: 1; transform: none; }
+.card.done .g, .card.failed .g, .card.undone .g { stroke-width: 2; }
+.card.done .pr .arc { stroke: var(--ok); }
+.card.done .ico .g.main { stroke: var(--ok); }
+.card.done .ring-pulse { animation: pulse .6s var(--ease-out) both; }
+@keyframes pulse { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 60%, transparent); } to { box-shadow: 0 0 0 12px transparent; } }
+.ring-pulse { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
+.card.failed .pr .arc { stroke: var(--danger); stroke-dashoffset: 0; }
+.card.failed .ico .g.main { stroke: var(--danger); }
+.card.undone .pr .arc { stroke: var(--faint); stroke-dashoffset: 0; }
+.card.undone .ico .g.main { stroke: var(--mut); }
+
+.mid { min-width: 0; }
+.t { font-size: 13.5px; font-weight: 650; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; font-size: 11.5px; color: var(--mut); line-height: 1.3; min-width: 0; font-variant-numeric: tabular-nums; }
+.sub .nm { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub .sz { flex: none; }
+.sub .dl { flex: none; font-weight: 700; }
+.dl.ok { color: var(--ok); } .dl.up { color: var(--warn); }
+.sub .pct { color: var(--kz); font-weight: 700; }
+.sub .err { color: var(--danger); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.style-glass .sub .err { color: #ffd0d6; }
+
+.act { display: flex; gap: 6px; align-items: center; }
+.act button { font: inherit; font-size: 11.5px; font-weight: 600; color: var(--txt); background: var(--btn); border: 1px solid var(--btn-edge); border-radius: 9px;
+  padding: 5px 10px; cursor: pointer; transition: background .12s, transform .12s; white-space: nowrap; }
+.style-glass .act button { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45); }
+.act button:hover { background: var(--btn-hot); }
+.act button:active { transform: scale(.95); }
+.act button:focus-visible, .ico:focus-visible { outline: 2px solid var(--kz); outline-offset: 2px; }
+.act button.sq { padding: 5px 7px; display: grid; place-items: center; }
+.act button.sq svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+
+.more { grid-column: 1 / -1; font-size: 11px; line-height: 1.45; color: var(--mut); padding: 8px 10px; margin-top: 9px; border-radius: 10px;
+  background: rgba(0, 0, 0, .22); user-select: text; -webkit-user-select: text; word-break: break-word; cursor: text; }
+.more[hidden] { display: none; }
+
+/* Invisible auto-dismiss timer: a visible bar read like progress of the conversion itself. */
+.drain { position: absolute; width: 0; height: 0; animation: drain 7s linear forwards; }
+.card:hover .drain, .card.hold .drain { animation-play-state: paused; }
+@keyframes drain { to { opacity: 0; } }
+.reduce-motion .drain { animation-duration: 7s !important; }
+@media (prefers-reduced-motion: reduce) { .drain { animation-duration: 7s !important; } }
+
+/* Sizes and percentages must not jitter while values change. */
+body { font-variant-numeric: tabular-nums; }

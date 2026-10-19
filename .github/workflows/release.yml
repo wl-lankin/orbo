@@ -1,0 +1,146 @@
+# Builds Orbo for macOS (Apple Silicon) and Windows, signs the updater artifacts and attaches
+# installers, .sig files and latest.json to a DRAFT GitHub release. Installed apps see the update
+# once the draft is published. Trigger: push a tag like v0.1.0 (see docs/RELEASE.md).
+#
+# createUpdaterArtifacts lives in tauri.updater.conf.json and is only passed here, because it makes
+# `tauri build` demand the signing key and local builds have none.
+# The Windows job waits for the macOS job: both write the same latest.json, and parallel uploads race.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.ref_name }}
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+
+      - name: Cache FFmpeg build
+        id: ffmpeg
+        uses: actions/cache@v4
+        with:
+          path: core/crates/orbo-app/bin
+          key: ffmpeg-macos-arm64-${{ hashFiles('vendor/build-ffmpeg-macos.sh') }}
+
+      - name: Build FFmpeg (LGPL, VideoToolbox, LAME)
+        if: steps.ffmpeg.outputs.cache-hit != 'true'
+        run: ./vendor/build-ffmpeg-macos.sh
+
+      - name: Check FFmpeg sidecars
+        run: |
+          ls -l core/crates/orbo-app/bin
+          core/crates/orbo-app/bin/ffmpeg-aarch64-apple-darwin -hide_banner -version | head -1
+
+      - name: Install tauri-cli
+        run: command -v cargo-tauri >/dev/null || cargo install tauri-cli --version "^2" --locked
+
+      - name: Release notes
+        id: notes
+        shell: bash
+        run: |
+          {
+            echo 'body<<NOTES_EOF'
+            bash .github/release-notes.sh "$TAG"
+            echo 'NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: core/crates/orbo-app
+          tauriScript: cargo tauri
+          tagName: ${{ env.TAG }}
+          releaseName: "Orbo ${{ env.TAG }}"
+          releaseBody: ${{ steps.notes.outputs.body }}
+          releaseDraft: true
+          prerelease: ${{ contains(env.TAG, '-') }}
+          uploadUpdaterJson: true
+          args: --target aarch64-apple-darwin --bundles app,dmg --config tauri.updater.conf.json
+
+  windows:
+    needs: macos
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+
+      # BtbN publishes rolling builds under the "latest" tag; the zip is checked against their checksum list.
+      - name: Download FFmpeg 8.1 (LGPL)
+        shell: pwsh
+        run: |
+          $base = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest'
+          $zip = 'ffmpeg-n8.1-latest-win64-lgpl-8.1.zip'
+          Invoke-WebRequest "$base/$zip" -OutFile $zip
+          Invoke-WebRequest "$base/checksums.sha256" -OutFile checksums.sha256
+          $line = Select-String -Path checksums.sha256 -SimpleMatch $zip | Select-Object -First 1
+          if (-not $line) { throw "No checksum entry for $zip" }
+          $expected = ($line.Line.Trim() -split '\s+')[0].ToLower()
+          $actual = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($expected -ne $actual) { throw "Checksum mismatch: expected $expected, got $actual" }
+          Expand-Archive $zip -DestinationPath ffmpeg-win
+          $dest = 'core/crates/orbo-app/bin'
+          New-Item -ItemType Directory -Force $dest | Out-Null
+          foreach ($n in 'ffmpeg', 'ffprobe') {
+            $exe = Get-ChildItem ffmpeg-win -Recurse -Filter "$n.exe" | Select-Object -First 1
+            if (-not $exe) { throw "$n.exe not found in the archive" }
+            Copy-Item $exe.FullName "$dest/$n-x86_64-pc-windows-msvc.exe"
+          }
+          & "$dest/ffmpeg-x86_64-pc-windows-msvc.exe" -hide_banner -version | Select-Object -First 1
+
+      - name: Install tauri-cli
+        shell: bash
+        run: command -v cargo-tauri >/dev/null || cargo install tauri-cli --version "^2" --locked
+
+      - name: Release notes
+        id: notes
+        shell: bash
+        run: |
+          {
+            echo 'body<<NOTES_EOF'
+            bash .github/release-notes.sh "$TAG"
+            echo 'NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: core/crates/orbo-app
+          tauriScript: cargo tauri
+          tagName: ${{ env.TAG }}
+          releaseName: "Orbo ${{ env.TAG }}"
+          releaseBody: ${{ steps.notes.outputs.body }}
+          releaseDraft: true
+          prerelease: ${{ contains(env.TAG, '-') }}
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: true
+          args: --target x86_64-pc-windows-msvc --config tauri.updater.conf.json --config tauri.windows.release.conf.json

@@ -1,0 +1,118 @@
+# Which targets the ring shows (max 6, clockwise from the top; the first is the center suggestion
+# unless a rule sets `default`). Lists only contain targets; incompatible ones are skipped automatically,
+# and a short ring is filled up with further compatible targets.
+
+ring:
+  format:
+    png: [webp, jpg, avif, web_image, ico, compress_image]
+    jpeg: [webp, png, mail_image, compress_image, pdf_image, strip_meta]
+    heic: [jpg, mail_image, png, webp, strip_meta, pdf_image]
+    webp: [jpg, png, gif_image, compress_image, avif, mail_image]
+    avif: [jpg, png, webp, mail_image]
+    gif: [gif_to_mp4, gif_to_webm, png, jpg, webp]
+    tiff: [jpg, png, pdf_image, webp, compress_image]
+    bmp: [png, jpg, webp, ico]
+    svg: [png, jpg, webp, ico, pdf_image]
+    psd: [png, jpg, webp, tiff]
+    raw: [jpg, png, tiff, webp]
+    ico: [png, jpg, webp]
+    mp4: [mp3, compress_video, gif_video, mail_video, trim_video, mute]
+    mov: [mp4, mp3, mp4_hevc, mail_video, gif_video, compress_video]
+    m4v: [mp4, mp3, mov, compress_video, gif_video, mail_video]
+    mkv: [mp4, mp3, mov, compress_video, gif_video, mail_video]
+    webm: [mp4, mp3, mov, gif_video, compress_video, mail_video]
+    avi: [mp4, mp3, mov, compress_video, gif_video, mail_video]
+    wmv: [mp4, mp3, mov, compress_video, mail_video, gif_video]
+    flv: [mp4, mp3, mov, compress_video, gif_video, webm]
+    mpeg: [mp4, mp3, mov, compress_video, gif_video, mkv]
+    mts: [mp4, mp3, mov, compress_video, mkv, mail_video]
+    threegp: [mp4, mp3, mov, compress_video, mail_video, gif_video]
+    mp3: [m4a, wav, ringtone, trim_audio, loudnorm, flac]
+    m4a: [mp3, wav, ringtone, trim_audio, loudnorm, flac]
+    wav: [mp3, m4a, flac, loudnorm, trim_audio, opus]
+    aiff: [mp3, m4a, wav, flac, loudnorm, trim_audio]
+    flac: [mp3, m4a, wav, alac, trim_audio, loudnorm]
+    ogg: [mp3, m4a, wav, flac, opus]
+    opus: [mp3, m4a, wav, ogg]
+    wma: [mp3, m4a, wav, flac]
+    amr: [mp3, m4a, wav]
+    aac: [mp3, m4a, wav]
+    caf: [m4a, mp3, wav, aiff]
+    csv: [xlsx, csv_excel_de, json, md_table, html_table, tsv]
+    tsv: [xlsx, csv, json, md_table, csv_excel_de]
+    xlsx: [csv, csv_excel_de, json, md_table, html_table, tsv]
+    xls: [xlsx, csv, csv_excel_de, json, md_table]
+    ods: [xlsx, csv, csv_excel_de, json, md_table]
+    json: [csv, xlsx, yaml, json_pretty, toml, json_minify]
+    yaml: [json, toml]
+    toml: [json, yaml]
+    pdf: [pdf_jpg, pdf_txt, pdf_compress, pdf_split, pdf_rotate, pdf_strip]
+    txt: [doc_pdf, docx, md, html_doc, rtf]
+    md: [html_doc, doc_pdf, docx, txt]
+    docx: [office_pdf, txt, md, odt, rtf]
+    doc: [docx, office_pdf, txt, odt]
+    odt: [docx, office_pdf, txt, rtf]
+    rtf: [docx, office_pdf, txt, odt]
+    html: [office_pdf, docx, md, txt]
+    srt: [vtt]
+    vtt: [srt]
+    zip: [unpack]
+    tar: [unpack, repack_zip]
+    tgz: [unpack, repack_zip]
+    gz: [unpack]
+  kind:
+    image: [jpg, png, webp, avif, compress_image, rotate_right]
+    video: [mp4, mp3, gif_video, mail_video, compress_video, mute]
+    audio: [mp3, m4a, wav, flac, loudnorm, trim_audio]
+    folder: [zip, tar_gz]
+    document: [doc_pdf, office_pdf, docx, txt, zip]
+    other: [zip]
+
+rules:
+  - why: Transparenz geht bei JPG verloren
+    when: { kind: [image], has_alpha: true }
+    note: { jpg: weißer Hintergrund }
+    demote: [jpg]
+    promote: [webp]
+
+  - why: Fotos und Screenshots ohne Transparenz sind als JPG viel kleiner
+    when: { format: [png], has_alpha: false }
+    promote: [jpg]
+
+  - why: Foto enthält den Aufnahmeort
+    when: { kind: [image], has_gps: true }
+    add: [strip_meta]
+    note: { strip_meta: GPS-Daten entfernen }
+
+  - why: Sehr große Bilder sind für Mail zu groß
+    when: { kind: [image], longest_edge_gt: 3000 }
+    add: [mail_image]
+
+  - why: Animiertes GIF ist als Video viel kleiner
+    when: { format: [gif, webp, png], animated: true }
+    promote: [gif_to_mp4]
+    default: gif_to_mp4
+
+  - why: H.264 mit AAC lässt sich ohne Neukodierung umverpacken
+    when: { format: [mov, mkv, m4v, mts], video_codec: [h264], audio_codec: [aac, mp3] }
+    note: { mp4: ⚡ ohne Neukodierung }
+
+  - why: Großes Video passt nicht in eine Mail
+    when: { kind: [video], size_gt_mb: 25 }
+    add: [mail_video]
+    promote: [compress_video]
+
+  - why: Kurzes Video eignet sich als GIF
+    when: { kind: [video], duration_lt_s: 15 }
+    add: [gif_video]
+
+  - why: Video ohne Ton
+    when: { kind: [video], has_audio: false }
+    remove: [mute]
+
+  - why: Kurzer Ton eignet sich als Klingelton
+    when: { kind: [audio], duration_lt_s: 40 }
+    add: [ringtone]
+
+  - why: Endung passt nicht zum Inhalt
+    when: { ext_mismatch: true }
