@@ -54,8 +54,12 @@ jobs:
           cargo build --release -p orbo-cli --target aarch64-apple-darwin
           cp target/aarch64-apple-darwin/release/orbo crates/orbo-app/bin/orbo-cli-aarch64-apple-darwin
 
+      # Prebuilt binary via cargo-binstall (falls back to compiling); saves about 10 minutes.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-binstall
       - name: Install tauri-cli
-        run: command -v cargo-tauri >/dev/null || cargo install tauri-cli --version "^2" --locked
+        run: command -v cargo-tauri >/dev/null || cargo binstall -y --locked tauri-cli --version "^2"
 
       - name: Release notes
         id: notes
@@ -136,9 +140,12 @@ jobs:
           cargo build --release -p orbo-cli --target x86_64-pc-windows-msvc
           cp target/x86_64-pc-windows-msvc/release/orbo.exe crates/orbo-app/bin/orbo-x86_64-pc-windows-msvc.exe
 
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-binstall
       - name: Install tauri-cli
         shell: bash
-        run: command -v cargo-tauri >/dev/null || cargo install tauri-cli --version "^2" --locked
+        run: command -v cargo-tauri >/dev/null || cargo binstall -y --locked tauri-cli --version "^2"
 
       - name: Release notes
         id: notes
