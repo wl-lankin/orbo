@@ -201,18 +201,26 @@ fn escape_down() -> bool {
 mod tests {
     use super::*;
 
+    // Absolute paths need a drive letter on Windows.
+    const ROOT: &str = if cfg!(windows) { "C:" } else { "" };
+    const ROOT_ENC: &str = if cfg!(windows) { "C%3A" } else { "" };
+
+    fn p(s: &str) -> PathBuf {
+        PathBuf::from(format!("{ROOT}{s}"))
+    }
+
     #[test]
     fn url_with_encoded_paths() {
-        let u = "orbo://open?f=%2fUsers%2fw%2fA%20b.png&f=%2Ftmp%2F%C3%84.jpg";
-        assert_eq!(parse_url(u), vec![PathBuf::from("/Users/w/A b.png"), PathBuf::from("/tmp/Ä.jpg")]);
+        let u = format!("orbo://open?f={ROOT_ENC}%2fUsers%2fw%2fA%20b.png&f={ROOT_ENC}%2Ftmp%2F%C3%84.jpg");
+        assert_eq!(parse_url(&u), vec![p("/Users/w/A b.png"), p("/tmp/Ä.jpg")]);
     }
 
     #[test]
     fn url_rejects_other_actions_and_relative_paths() {
-        assert!(parse_url("orbo://settings?f=%2Fa").is_empty());
-        assert!(parse_url("https://open?f=%2Fa").is_empty());
+        assert!(parse_url(&format!("orbo://settings?f={ROOT_ENC}%2Fa")).is_empty());
+        assert!(parse_url(&format!("https://open?f={ROOT_ENC}%2Fa")).is_empty());
         assert!(parse_url("orbo://open?f=rel%2Fa").is_empty());
-        assert_eq!(parse_url("orbo://open/?f=%2Fa&f=%2Fa"), vec![PathBuf::from("/a")]);
+        assert_eq!(parse_url(&format!("orbo://open/?f={ROOT_ENC}%2Fa&f={ROOT_ENC}%2Fa")), vec![p("/a")]);
     }
 
     #[test]
@@ -223,8 +231,8 @@ mod tests {
 
     #[test]
     fn args_after_open() {
-        let a: Vec<String> = ["orbo", "--open", "/a b/c.png", "/d.txt", "--settings"].iter().map(|s| s.to_string()).collect();
-        assert_eq!(parse_args(&a), vec![PathBuf::from("/a b/c.png"), PathBuf::from("/d.txt")]);
+        let a: Vec<String> = vec!["orbo".into(), "--open".into(), format!("{ROOT}/a b/c.png"), format!("{ROOT}/d.txt"), "--settings".into()];
+        assert_eq!(parse_args(&a), vec![p("/a b/c.png"), p("/d.txt")]);
         assert!(parse_args(&["orbo".to_string()]).is_empty());
     }
 }

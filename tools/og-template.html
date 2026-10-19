@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../fonts/fonts.css"><link rel="stylesheet" href="orbo.css">
+<style>
+html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:#0a0b0e}
+.og{position:relative;width:1200px;height:630px;overflow:hidden}
+.og::before{content:'';position:absolute;inset:-20%;background:
+ radial-gradient(30% 40% at 72% 45%, rgba(61,123,255,.38), transparent 70%),
+ radial-gradient(22% 30% at 86% 75%, rgba(95,212,216,.22), transparent 70%),
+ radial-gradient(20% 26% at 62% 18%, rgba(255,184,120,.18), transparent 70%);filter:blur(30px)}
+.og .grid{position:absolute;inset:0;background:radial-gradient(circle at 1px 1px, rgba(255,255,255,.07) 1px, transparent 1.4px) 0 0/28px 28px}
+.copy{position:absolute;left:72px;top:80px;width:560px}
+.copy .wordmark{font-size:44px}
+.copy h1{margin:46px 0 0;font:850 66px/.98 var(--brand);letter-spacing:-.035em;color:#f2f3f7}
+.copy h1 em{display:block;font-size:1.06em;color:#dfe4ff;margin-top:6px}
+.copy p{margin:30px 0 0;font:500 21px/1.4 var(--body);color:rgba(242,243,247,.66)}
+.copy .chips{display:flex;gap:10px;margin-top:34px}
+.copy .chips span{font:700 15px var(--brand);padding:8px 14px;border-radius:99px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);color:#f2f3f7}
+.og svg.ring{position:absolute;inset:auto;right:40px;top:35px;width:560px;height:560px}
+.ring::before{content:'';position:absolute;inset:16%;border-radius:50%;background:rgba(14,16,26,.55);backdrop-filter:blur(20px)}
+</style></head><body><div class="og"><div class="grid"></div>
+<div class="copy"><span class="wordmark">orb<span class="ring-o"></span></span>
+<h1>Dateien umwandeln,<em>ohne sie loszulassen.</em></h1>
+<p>Ein Ring um deine Datei, mitten im Ziehen. Über 90 Formate, alles lokal.</p>
+<div class="chips"><span>Kostenlos</span><span>macOS</span><span>Windows</span></div></div>
+<svg class="ring wheel" viewBox="-260 -260 520 520"><defs><filter id="glowF" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="9"/></filter>
+<linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<g id="secs"></g><g id="pres"></g>
+<g class="lens on" style="--k:var(--image)"><circle class="lens-glow" r="58" filter="url(#glowF)"/><circle class="lens-bg" r="62"/><circle class="lens-edge" r="62"/>
+<path d="M-13.15 -64.68A66 66 0 0 1 13.15 -64.68" style="fill:none;stroke:var(--k);stroke-width:3;stroke-linecap:round"/>
+<text class="l-name" y="-26">urlaub.heic</text><text class="l-big" y="0">JPG</text><text class="l-m" y="24">1,4 MB · −71 %</text></g></svg>
+</div>
+<script>
+const R={inner:70,out:180,pin:190,pout:244};const pol=(r,a)=>[r*Math.sin(a),-r*Math.cos(a)];const f1=n=>+n.toFixed(2);const pt=(r,a)=>pol(r,a).map(f1).join(' ');
+function sector(r0,r1,a0,a1,rc){const eo=Math.asin(rc/(r1-rc)),ei=Math.asin(rc/(r0+rc));const o0=a0+eo,o1=a1-eo,i0=a0+ei,i1=a1-ei;const e1=Math.sqrt((r1-rc)**2-rc**2),e0=Math.sqrt((r0+rc)**2-rc**2);const L=o1-o0>Math.PI?1:0,Li=i1-i0>Math.PI?1:0;return `M${pt(e0,a0)}L${pt(e1,a0)}A${rc} ${rc} 0 0 1 ${pt(r1,o0)}A${r1} ${r1} 0 ${L} 1 ${pt(r1,o1)}A${rc} ${rc} 0 0 1 ${pt(e1,a1)}L${pt(e0,a1)}A${rc} ${rc} 0 0 1 ${pt(r0,i1)}A${r0} ${r0} 0 ${Li} 0 ${pt(r0,i0)}A${rc} ${rc} 0 0 1 ${pt(e0,a0)}Z`}
+const T=[['JPG','universell kompatibel','image'],['E-Mail','1600 px · JPG','image'],['PNG','verlustfreie Qualität','image'],['WEBP','kompakt für das Web','image'],['Privat','GPS-Daten entfernen','image'],['PDF','als PDF-Dokument','document']];
+const step=2*Math.PI/6,ga=5/125,rm=125;let h='';
+T.forEach(([t,s,k],i)=>{const a=i*step,a0=a-step/2+ga/2,a1=a+step/2-ga/2,d=sector(R.inner,R.out,a0,a1,8);const [lx,ly]=pol(rm,a).map(f1);const hot=i===0;
+h+=`<g class="sec${hot?' hot':''}" style="--k:var(--${k});--kz:var(--${k});--ux:${Math.sin(a)};--uy:${-Math.cos(a)}"><g class="lift"><path class="gl" d="${d}" filter="url(#glowF)"/><path class="body" d="${d}"/><path class="tint" d="${d}"/><path d="${d}" fill="url(#sheen)"/><path class="edge" d="${d}"/>
+<text class="n" x="${lx}" y="${ly-6}">${t}</text><text class="s" x="${lx}" y="${ly+12}">${s}</text></g></g>`});
+document.getElementById('secs').innerHTML=h;
+const P=['Web','Ausgewogen','Maximal'];let p='';const w=.42,st=-w*1.5;P.forEach((l,k)=>{const a0=st+k*w+.0125,a1=st+(k+1)*w-.0125,d=sector(R.pin,R.pout,a0,a1,7);const [x,y]=pol(217,(a0+a1)/2).map(f1);
+p+=`<g class="pre${k===1?' hot':''}" style="--k:var(--image)"><path class="pb" d="${d}"/><path class="pt" d="${d}"/><text x="${x}" y="${y}">${l}</text></g>`});document.getElementById('pres').innerHTML=p;
+</script></body></html>
