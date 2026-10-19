@@ -466,8 +466,10 @@
   listen('ring:close', e => close(e.payload && e.payload.reason));
   listen('settings', e => applySettings(e.payload));
 
-  T.webview.getCurrentWebview().onDragDropEvent(e => {
-    const p = e.payload;
+  // Windows: the drag probe forwards OLE events over the ring as `ring:dnd` (same payload shape).
+  T.webview.getCurrentWebview().onDragDropEvent(e => onDnd(e.payload));
+  listen('ring:dnd', e => onDnd(e.payload));
+  function onDnd(p) {
     if (!p) return;
     // wry reports points on macOS but real physical pixels on Windows.
     const scale = IS_MAC ? 1 : (window.devicePixelRatio || 1);
@@ -486,7 +488,7 @@
     } else if (p.type === 'leave') {
       if (S.active && S.targets.length) setTarget({ type: 'none' });
     }
-  });
+  }
 
   invoke('settings_get').then(applySettings).catch(() => {});
 })();

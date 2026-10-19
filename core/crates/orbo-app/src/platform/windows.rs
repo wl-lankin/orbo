@@ -8,7 +8,7 @@
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicIsize, Ordering};
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 use windows::core::{implement, w, Ref};
@@ -24,7 +24,7 @@ use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VIRTUAL_KEY, VK_CONTROL, VK_LBUTTON, VK_MENU, VK_RBUTTON, VK_SHIFT};
 use windows::Win32::UI::Shell::{DragQueryFileW, HDROP};
 use windows::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, DefWindowProcW, GetCursorPos, GetSystemMetrics, GetWindowLongPtrW, RegisterClassW, SetLayeredWindowAttributes,
+    CreateWindowExW, DefWindowProcW, GetCursorPos, GetSystemMetrics, GetWindowLongPtrW, GetWindowRect, RegisterClassW, SetLayeredWindowAttributes,
     SetWindowLongPtrW, SetWindowPos, ShowWindow, GWL_EXSTYLE, GWL_STYLE, HWND_TOPMOST, LWA_ALPHA, MA_NOACTIVATE, SM_CXDRAG, SM_SWAPBUTTON,
     SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, SWP_SHOWWINDOW, SW_HIDE, SW_SHOWNOACTIVATE, WM_MOUSEACTIVATE,
     WNDCLASSW, WS_CAPTION, WS_EX_APPWINDOW, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_MAXIMIZEBOX,
@@ -141,10 +141,44 @@ struct Probe {
     files: Option<Vec<PathBuf>>,
     /// An OLE drag without files (text, links) reached the probe.
     rejected: bool,
+    /// The ring is up and the probe covers it: drag events are forwarded to the ring page.
+    covering: bool,
 }
 
-static PROBE: Mutex<Probe> = Mutex::new(Probe { armed: false, files: None, rejected: false });
+static PROBE: Mutex<Probe> = Mutex::new(Probe { armed: false, files: None, rejected: false, covering: false });
 static PROBE_HWND: AtomicIsize = AtomicIsize::new(0);
+/// Set by the app: the ring overlay window.
+pub static RING_HWND: AtomicIsize = AtomicIsize::new(0);
+
+/// Drag events over the ring, in physical pixels relative to the ring window.
+pub enum RingDnd {
+    Over { x: f64, y: f64 },
+    Leave,
+    Drop { x: f64, y: f64, files: Vec<PathBuf> },
+}
+
+static RING_DND: OnceLock<Box<dyn Fn(RingDnd) + Send + Sync>> = OnceLock::new();
+
+/// WebView2 inside a non-activating topmost window does not reliably receive OLE drops, so the probe
+/// stays on top of the ring and hands the drag to the page itself.
+pub fn set_ring_dnd(sink: impl Fn(RingDnd) + Send + Sync + 'static) {
+    let _ = RING_DND.set(Box::new(sink));
+}
+
+fn ring_relative(pt: &POINTL) -> (f64, f64) {
+    let h = RING_HWND.load(Ordering::SeqCst);
+    let mut r = RECT::default();
+    unsafe {
+        let _ = GetWindowRect(hwnd(h), &mut r);
+    }
+    ((pt.x - r.left) as f64, (pt.y - r.top) as f64)
+}
+
+fn send_dnd(ev: RingDnd) {
+    if let Some(f) = RING_DND.get() {
+        f(ev);
+    }
+}
 const PROBE_SIZE: f64 = 160.0;
 
 unsafe fn files_from(obj: &IDataObject) -> Option<Vec<PathBuf>> {
@@ -183,17 +217,35 @@ impl IDropTarget_Impl for ProbeTarget_Impl {
         Ok(())
     }
 
-    fn DragOver(&self, _keys: MODIFIERKEYS_FLAGS, _pt: &POINTL, effect: *mut DROPEFFECT) -> windows::core::Result<()> {
-        let p = PROBE.lock().unwrap();
-        unsafe { *effect = if p.armed && p.files.is_some() { DROPEFFECT_COPY } else { DROPEFFECT_NONE } };
+    fn DragOver(&self, _keys: MODIFIERKEYS_FLAGS, pt: &POINTL, effect: *mut DROPEFFECT) -> windows::core::Result<()> {
+        let (covering, ok) = {
+            let p = PROBE.lock().unwrap();
+            (p.covering, p.covering || (p.armed && p.files.is_some()))
+        };
+        if covering {
+            let (x, y) = ring_relative(pt);
+            send_dnd(RingDnd::Over { x, y });
+        }
+        unsafe { *effect = if ok { DROPEFFECT_COPY } else { DROPEFFECT_NONE } };
         Ok(())
     }
 
     fn DragLeave(&self) -> windows::core::Result<()> {
+        if PROBE.lock().unwrap().covering {
+            send_dnd(RingDnd::Leave);
+        }
         Ok(())
     }
 
-    fn Drop(&self, _data: Ref<'_, IDataObject>, _keys: MODIFIERKEYS_FLAGS, _pt: &POINTL, effect: *mut DROPEFFECT) -> windows::core::Result<()> {
+    fn Drop(&self, data: Ref<'_, IDataObject>, _keys: MODIFIERKEYS_FLAGS, pt: &POINTL, effect: *mut DROPEFFECT) -> windows::core::Result<()> {
+        if PROBE.lock().unwrap().covering {
+            let files = data.as_ref().and_then(|d| unsafe { files_from(d) }).unwrap_or_default();
+            let (x, y) = ring_relative(pt);
+            send_dnd(RingDnd::Drop { x, y, files });
+            // Copy, never move: the source keeps its file.
+            unsafe { *effect = DROPEFFECT_COPY };
+            return Ok(());
+        }
         // Released before the ring was up: refuse, so the source never moves or deletes anything.
         eprintln!("[orbo] Drop auf der Sonde, abgelehnt");
         unsafe { *effect = DROPEFFECT_NONE };
@@ -258,7 +310,7 @@ fn show_probe(at: Point) {
     if h == 0 {
         return;
     }
-    *PROBE.lock().unwrap() = Probe { armed: true, files: None, rejected: false };
+    *PROBE.lock().unwrap() = Probe { armed: true, ..Probe::default() };
     let px = (PROBE_SIZE * scale_at(at)).round() as i32;
     unsafe {
         let _ = SetWindowPos(
@@ -273,9 +325,33 @@ fn show_probe(at: Point) {
     }
 }
 
+/// Main thread. Moves the probe over the ring window (call after the ring is shown) so it stays the drop target.
+fn cover_ring() {
+    let (h, ring) = (PROBE_HWND.load(Ordering::SeqCst), RING_HWND.load(Ordering::SeqCst));
+    if h == 0 || ring == 0 {
+        return;
+    }
+    let mut r = RECT::default();
+    unsafe {
+        let _ = GetWindowRect(hwnd(ring), &mut r);
+    }
+    {
+        let mut p = PROBE.lock().unwrap();
+        p.armed = false;
+        p.covering = true;
+    }
+    unsafe {
+        let _ = SetWindowPos(hwnd(h), Some(HWND_TOPMOST), r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+    }
+}
+
 /// Main thread.
-fn hide_probe() {
-    PROBE.lock().unwrap().armed = false;
+pub fn hide_probe() {
+    {
+        let mut p = PROBE.lock().unwrap();
+        p.armed = false;
+        p.covering = false;
+    }
     let h = PROBE_HWND.load(Ordering::SeqCst);
     if h != 0 {
         hide(h);
@@ -384,6 +460,7 @@ pub fn watch(
             if !down {
                 match current {
                     Phase::Probing { .. } => main(Box::new(hide_probe)),
+                    // The probe goes when the ring window hides (windows::hide_ring), after the drop arrived.
                     Phase::Shown => signal(DragSignal::Released),
                     _ => {}
                 }
@@ -433,9 +510,9 @@ pub fn watch(
                     if let Some(files) = files {
                         eprintln!("[orbo] Sonde: Datei-Drag nach {:.0} ms erkannt", since.elapsed().as_secs_f64() * 1000.0);
                         phase = Some(Phase::Shown);
-                        // The ring is shown first (queued by `signal`), then the probe leaves.
+                        // The ring is shown first (queued by `signal`), then the probe moves on top of it.
                         signal(DragSignal::Triggered { at, trigger, files });
-                        main(Box::new(hide_probe));
+                        main(Box::new(cover_ring));
                     } else if rejected || since.elapsed() > Duration::from_millis(1500) {
                         eprintln!(
                             "[orbo] Sonde: {}",
@@ -456,6 +533,7 @@ pub fn watch(
                             need_release = key_down;
                             shake = Shake::default();
                             signal(DragSignal::Cancelled);
+                            main(Box::new(hide_probe));
                         }
                     }
                 }

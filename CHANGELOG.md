@@ -1,5 +1,9 @@
 # Änderungen
 
+## 1.1.3
+
+- Windows: Das Ablegen auf einem Feld im Ring startet jetzt die Umwandlung. Vorher kam das Loslassen beim Ring nicht an.
+
 ## 1.1.2
 
 - Windows: Der Ring erscheint ohne Fensterrahmen und Titelleiste und blitzt beim Öffnen nicht mehr weiß auf.

@@ -87,6 +87,16 @@ pub fn create_overlays(app: &AppHandle) -> tauri::Result<()> {
         }
         // Showing the hidden ring once off screen moves WebView2 setup out of the first real trigger.
         let rh = ring.hwnd()?.0 as isize;
+        win::RING_HWND.store(rh, std::sync::atomic::Ordering::SeqCst);
+        let ring_for_dnd = ring.clone();
+        win::set_ring_dnd(move |ev| {
+            let payload = match ev {
+                win::RingDnd::Over { x, y } => serde_json::json!({ "type": "over", "position": { "x": x, "y": y } }),
+                win::RingDnd::Leave => serde_json::json!({ "type": "leave" }),
+                win::RingDnd::Drop { x, y, files } => serde_json::json!({ "type": "drop", "position": { "x": x, "y": y }, "paths": files }),
+            };
+            let _ = ring_for_dnd.emit("ring:dnd", payload);
+        });
         win::park(rh);
         win::show_without_activating(rh);
         win::hide(rh);
@@ -206,6 +216,7 @@ pub fn hide_ring(app: &AppHandle, delay_ms: u64) {
             }
             #[cfg(target_os = "windows")]
             if let Ok(h) = w2.hwnd() {
+                crate::platform::windows::hide_probe();
                 crate::platform::windows::hide(h.0 as isize);
             }
             #[cfg(not(any(target_os = "macos", target_os = "windows")))]
@@ -463,6 +474,7 @@ pub fn hide_notch(app: &AppHandle, delay_ms: u64) {
             }
             #[cfg(target_os = "windows")]
             if let Ok(h) = w2.hwnd() {
+                crate::platform::windows::hide_probe();
                 crate::platform::windows::hide(h.0 as isize);
             }
             #[cfg(not(any(target_os = "macos", target_os = "windows")))]
