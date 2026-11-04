@@ -79,13 +79,6 @@ jobs:
         shell: bash
         run: command -v cargo-tauri >/dev/null || cargo binstall -y --locked tauri-cli --version "^2"
 
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-binstall
-      - name: Install tauri-cli
-        shell: bash
-        run: command -v cargo-tauri >/dev/null || cargo binstall -y --locked tauri-cli --version "^2"
-
       - name: Build and sign
         working-directory: core/crates/orbo-app
         run: cargo tauri build --target x86_64-pc-windows-msvc --config tauri.windows.release.conf.json --config "${{ steps.signing.outputs.config }}"
