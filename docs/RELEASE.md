@@ -87,7 +87,7 @@ Eine lokal gebaute App (`cargo run`) kann sich nicht ersetzen und zeigt dann nur
 ## Einschränkungen und offene Punkte
 
 - TODO Apple-Notarisierung: Das DMG ist weder signiert noch notarisiert. Beim ersten Öffnen blockiert Gatekeeper (Systemeinstellungen, Datenschutz und Sicherheit, „Trotzdem öffnen“, oder `xattr -dr com.apple.quarantine /Applications/Orbo.app`). Spätere Updates über den Updater sind davon nicht betroffen.
-- TODO Windows-Signierung: Der Installer ist nicht signiert, SmartScreen meldet sich beim ersten Start („Weitere Informationen“, „Trotzdem ausführen“).
+- Windows-Signierung: App, Hilfsprogramme und Installer werden im Release-Workflow mit Azure Artifact Signing signiert (Herausgeber „Wolfgang Linz“), siehe [CODE-SIGNING.md](CODE-SIGNING.md). Solange das Zertifikat neu ist, kann SmartScreen beim ersten Start trotzdem noch fragen.
 - Nur Apple Silicon (`aarch64-apple-darwin`). Intel-Macs bekommen weder Installer noch Updates. Ein Intel-Build bräuchte einen zweiten FFmpeg-Build und einen weiteren Job.
 - Die Windows-Pipeline lädt FFmpeg aus den rollenden BtbN-Builds (Tag `latest`) und prüft die Prüfsumme. BtbN ersetzt diese Dateien regelmäßig. Verschwindet der Dateiname `ffmpeg-n8.1-latest-win64-lgpl-8.1.zip`, bricht der Job mit einer klaren Meldung ab. Dann Dateinamen im Workflow anpassen oder die ZIP selbst als Release-Asset ablegen.
 - TODO FFmpeg-Lizenztext für macOS: Der Windows-Installer legt `FFmpeg-LICENSE.txt` bei, das macOS-Bundle noch nicht.

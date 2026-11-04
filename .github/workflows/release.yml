@@ -5,6 +5,7 @@
 # createUpdaterArtifacts lives in tauri.updater.conf.json and is only passed here, because it makes
 # `tauri build` demand the signing key and local builds have none.
 # The Windows job waits for the macOS job: both write the same latest.json, and parallel uploads race.
+# The Windows binaries and installer are Authenticode-signed with Azure Artifact Signing (docs/CODE-SIGNING.md).
 
 name: Release
 
@@ -99,6 +100,14 @@ jobs:
   windows:
     needs: macos
     runs-on: windows-latest
+    # The Azure login for signing only trusts jobs in this environment.
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -133,12 +142,21 @@ jobs:
           }
           & "$dest/ffmpeg-x86_64-pc-windows-msvc.exe" -hide_banner -version | Select-Object -First 1
 
-      - name: Build command line tool (resource cli/orbo.exe)
+      # The app, the sidecars and the installer are signed inside tauri build, so the updater .sig
+      # files are made over the signed installer. cli/orbo.exe is a resource, which Tauri does not sign.
+      - name: Prepare code signing
+        id: signing
+        uses: ./.github/actions/windows-signing
+        with:
+          description: Orbo
+
+      - name: Build and sign command line tool (resource cli/orbo.exe)
         shell: bash
         working-directory: core
         run: |
           cargo build --release -p orbo-cli --target x86_64-pc-windows-msvc
           cp target/x86_64-pc-windows-msvc/release/orbo.exe crates/orbo-app/bin/orbo-x86_64-pc-windows-msvc.exe
+          pwsh -NoProfile -File ../.github/actions/windows-signing/sign.ps1 crates/orbo-app/bin/orbo-x86_64-pc-windows-msvc.exe
 
       - uses: taiki-e/install-action@v2
         with:
@@ -172,7 +190,7 @@ jobs:
           prerelease: ${{ contains(env.TAG, '-') }}
           uploadUpdaterJson: true
           updaterJsonPreferNsis: true
-          args: --target x86_64-pc-windows-msvc --config tauri.updater.conf.json --config tauri.windows.release.conf.json
+          args: --target x86_64-pc-windows-msvc --config tauri.updater.conf.json --config tauri.windows.release.conf.json --config ${{ steps.signing.outputs.config }}
 
       - name: Stable download name (Windows)
         shell: bash

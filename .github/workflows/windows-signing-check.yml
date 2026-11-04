@@ -1,0 +1,113 @@
+# Builds and signs the Windows installer without releasing anything, then checks the signatures
+# of the installer and of every .exe inside it. Runs on pull requests that touch the signing setup,
+# or by hand. The installer is kept as a workflow artifact.
+
+name: Windows signing check
+
+on:
+  pull_request:
+    paths:
+      - .github/actions/windows-signing/**
+      - .github/workflows/windows-signing-check.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  sign:
+    runs-on: windows-latest
+    environment: release
+    env:
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+
+      # BtbN publishes rolling builds under the "latest" tag; the zip is checked against their checksum list.
+      - name: Download FFmpeg 8.1 (LGPL)
+        shell: pwsh
+        run: |
+          $base = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest'
+          $zip = 'ffmpeg-n8.1-latest-win64-lgpl-8.1.zip'
+          Invoke-WebRequest "$base/$zip" -OutFile $zip
+          Invoke-WebRequest "$base/checksums.sha256" -OutFile checksums.sha256
+          $line = Select-String -Path checksums.sha256 -SimpleMatch $zip | Select-Object -First 1
+          if (-not $line) { throw "No checksum entry for $zip" }
+          $expected = ($line.Line.Trim() -split '\s+')[0].ToLower()
+          $actual = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($expected -ne $actual) { throw "Checksum mismatch: expected $expected, got $actual" }
+          Expand-Archive $zip -DestinationPath ffmpeg-win
+          $dest = 'core/crates/orbo-app/bin'
+          New-Item -ItemType Directory -Force $dest | Out-Null
+          foreach ($n in 'ffmpeg', 'ffprobe') {
+            $exe = Get-ChildItem ffmpeg-win -Recurse -Filter "$n.exe" | Select-Object -First 1
+            if (-not $exe) { throw "$n.exe not found in the archive" }
+            Copy-Item $exe.FullName "$dest/$n-x86_64-pc-windows-msvc.exe"
+          }
+          & "$dest/ffmpeg-x86_64-pc-windows-msvc.exe" -hide_banner -version | Select-Object -First 1
+
+      # The app, the sidecars and the installer are signed inside tauri build, so the updater .sig
+      # files are made over the signed installer. cli/orbo.exe is a resource, which Tauri does not sign.
+      - name: Prepare code signing
+        id: signing
+        uses: ./.github/actions/windows-signing
+        with:
+          description: Orbo
+
+      - name: Build and sign command line tool (resource cli/orbo.exe)
+        shell: bash
+        working-directory: core
+        run: |
+          cargo build --release -p orbo-cli --target x86_64-pc-windows-msvc
+          cp target/x86_64-pc-windows-msvc/release/orbo.exe crates/orbo-app/bin/orbo-x86_64-pc-windows-msvc.exe
+          pwsh -NoProfile -File ../.github/actions/windows-signing/sign.ps1 crates/orbo-app/bin/orbo-x86_64-pc-windows-msvc.exe
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-binstall
+      - name: Install tauri-cli
+        shell: bash
+        run: command -v cargo-tauri >/dev/null || cargo binstall -y --locked tauri-cli --version "^2"
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-binstall
+      - name: Install tauri-cli
+        shell: bash
+        run: command -v cargo-tauri >/dev/null || cargo binstall -y --locked tauri-cli --version "^2"
+
+      - name: Build and sign
+        working-directory: core/crates/orbo-app
+        run: cargo tauri build --target x86_64-pc-windows-msvc --config tauri.windows.release.conf.json --config "${{ steps.signing.outputs.config }}"
+
+      - name: Check the signatures
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem core/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe
+          $unpacked = Join-Path $env:RUNNER_TEMP 'installer'
+          7z x $setup.FullName "-o$unpacked" -y | Out-Null
+          $files = @($setup) + @(Get-ChildItem $unpacked -Recurse -Filter *.exe | Where-Object Name -notlike 'uninstall*')
+          if (-not ($files.Name -ccontains 'Orbo.exe') -or -not ($files.Name -ccontains 'orbo.exe')) { throw "App or CLI missing in the installer: $($files.Name -join ', ')" }
+          $bad = 0
+          foreach ($f in $files) {
+            $s = Get-AuthenticodeSignature $f.FullName
+            "{0}: {1} | {2} | timestamp: {3}" -f $f.Name, $s.Status, $s.SignerCertificate.Subject, ($null -ne $s.TimeStamperCertificate)
+            if ($s.Status -ne 'Valid' -or $s.SignerCertificate.Subject -notmatch 'CN=Wolfgang Linz' -or -not $s.TimeStamperCertificate) { $bad++ }
+          }
+          if ($bad) { throw "$bad file(s) not signed correctly" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orbo-windows-signed
+          path: core/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe
+          retention-days: 7
