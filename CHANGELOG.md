@@ -1,5 +1,9 @@
 # Änderungen
 
+## 1.1.6
+
+- Windows: Installer und App sind jetzt digital signiert (Herausgeber Wolfgang Linz). Windows warnt beim Installieren nicht mehr vor einem unbekannten Herausgeber.
+
 ## 1.1.5
 
 - Windows: Der Ring hat jetzt wirklich eine deckende Scheibe. Die Änderung aus 1.1.4 kam beim Ring nicht an.
