@@ -1,0 +1,88 @@
+# Prepares Authenticode signing with Azure Artifact Signing for a Tauri build on Windows.
+# It downloads Microsoft's signing client, writes its metadata and a Tauri config whose
+# bundle.windows.signCommand runs sign.ps1. Pass the config to `tauri build` with --config.
+# Signing logs in through GitHub OIDC (no stored secret): the job needs `id-token: write`,
+# `environment: release` and the variables AZURE_CLIENT_ID and AZURE_TENANT_ID.
+
+name: Windows code signing
+description: Prepare Azure Artifact Signing for tauri build
+
+inputs:
+  description:
+    description: Product name shown in the UAC prompt
+    required: true
+  endpoint:
+    description: Endpoint of the signing account's region
+    default: https://neu.codesigning.azure.net
+  account:
+    description: Artifact Signing account
+    default: wolfganglinz-signing
+  profile:
+    description: Certificate profile
+    default: wolfganglinz-public
+
+outputs:
+  config:
+    description: Path of the Tauri config that turns signing on
+    value: ${{ steps.prepare.outputs.config }}
+
+runs:
+  using: composite
+  steps:
+    # Client 1.0.147 and later loads the .NET 10 runtime.
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - id: prepare
+      shell: pwsh
+      env:
+        CLIENT_VERSION: 1.0.151
+        CLIENT_SHA256: 35375a4bc4e1102da729fc3d8d9925f774c3baae6b8b7ff6398d948ca9ab0d8a
+        ENDPOINT: ${{ inputs.endpoint }}
+        ACCOUNT: ${{ inputs.account }}
+        PROFILE: ${{ inputs.profile }}
+        DESCRIPTION: ${{ inputs.description }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        if (-not $env:AZURE_CLIENT_ID -or -not $env:AZURE_TENANT_ID) { throw 'AZURE_CLIENT_ID and AZURE_TENANT_ID must be set on the job' }
+        if (-not $env:ACTIONS_ID_TOKEN_REQUEST_URL) { throw 'The job needs permissions: id-token: write' }
+
+        $dir = Join-Path $env:RUNNER_TEMP 'artifact-signing'
+        New-Item -ItemType Directory -Force $dir | Out-Null
+        $pkg = Join-Path $dir 'client.zip'
+        Invoke-WebRequest "https://www.nuget.org/api/v2/package/Microsoft.ArtifactSigning.Client/$env:CLIENT_VERSION" -OutFile $pkg
+        $hash = (Get-FileHash $pkg -Algorithm SHA256).Hash.ToLower()
+        if ($hash -ne $env:CLIENT_SHA256) { throw "Signing client checksum mismatch: $hash" }
+        Expand-Archive $pkg -DestinationPath (Join-Path $dir 'client') -Force
+        $dlib = Join-Path $dir 'client\bin\x64\Azure.CodeSigning.Dlib.dll'
+
+        # Only the workload identity (the OIDC token sign.ps1 fetches) may sign in. On a hosted
+        # runner the managed identity probe would otherwise go first.
+        $metadata = Join-Path $dir 'metadata.json'
+        @{
+          Endpoint = $env:ENDPOINT
+          CodeSigningAccountName = $env:ACCOUNT
+          CertificateProfileName = $env:PROFILE
+          ExcludeCredentials = @(
+            'EnvironmentCredential', 'ManagedIdentityCredential', 'SharedTokenCacheCredential',
+            'VisualStudioCredential', 'VisualStudioCodeCredential', 'AzureCliCredential',
+            'AzurePowerShellCredential', 'AzureDeveloperCliCredential', 'InteractiveBrowserCredential'
+          )
+        } | ConvertTo-Json | Set-Content $metadata -Encoding utf8
+
+        $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" |
+          Sort-Object { [version]$_.Directory.Parent.Name } | Select-Object -Last 1
+        if (-not $signtool) { throw 'signtool.exe not found' }
+
+        "ARTIFACT_SIGNING_DLIB=$dlib" >> $env:GITHUB_ENV
+        "ARTIFACT_SIGNING_METADATA=$metadata" >> $env:GITHUB_ENV
+        "ARTIFACT_SIGNING_SIGNTOOL=$($signtool.FullName)" >> $env:GITHUB_ENV
+        "ARTIFACT_SIGNING_DESCRIPTION=$env:DESCRIPTION" >> $env:GITHUB_ENV
+
+        $config = Join-Path $dir 'tauri.signing.conf.json'
+        @{ bundle = @{ windows = @{ signCommand = @{
+          cmd = 'pwsh'
+          args = @('-NoProfile', '-NonInteractive', '-File', (Join-Path $env:GITHUB_ACTION_PATH 'sign.ps1'), '%1')
+        } } } } | ConvertTo-Json -Depth 6 | Set-Content $config -Encoding utf8
+        "config=$config" >> $env:GITHUB_OUTPUT
